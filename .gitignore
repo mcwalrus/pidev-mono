@@ -8,7 +8,11 @@ packages/*/node_modules
 *.tsbuildinfo
 *.cpuprofile
 
-.pi/
+.pi/*
+!.pi/skills/
+.pi/skills/*
+!.pi/skills/adding-a-package/
+!.pi/skills/conventions/
 .agents/
 .claude/
 skills-lock.json

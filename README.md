@@ -1,65 +1,73 @@
 # pidev-mono
 
-Monorepo for Pi extensions in the `@pidev/*` family. Lockstep versions, one
-install, one publish pipeline. Targets the Pi Agent CLI
-(`@earendil-works/pi-coding-agent`).
+A monorepo of extensions for [`@earendil-works/pi-coding-agent`](https://www.npmjs.com/package/@earendil-works/pi-coding-agent)  Pi Agent. Every package ships under the `@pidev/*` scope and is versioned in lockstep: one install, one release pipeline.
 
-## Layout
+## Getting started
+
+Requires Node >= 22 and npm >= 11. Bootstrap once:
+
+```bash
+just install
+```
+
+I use [`justfile`](https://github.com/casey/just).  Run `just` to see workspace helpers.
+
+## Packages
+
+| Package                                    | What it is                                                               | For   |
+| ------------------------------------------ | ------------------------------------------------------------------------ | ----- |
+| [`@pidev/checks`](packages/checks)         | Environment precondition checks beside the editor                        | User  |
+| [`@pidev/self-help`](packages/self-help)   | Tells the agent which extensions are installed and where their docs live | Agent |
+| [`@pidev/term-image`](packages/term-image) | Captures a tmux pane to a PNG, plus a skill that says when to use it     | Agent |
+
+### @pidev/checks
+
+You usually discover a closed port, a down service, or a credential that does not
+resolve only when a tool fails mid-session. This extension lets you declare named
+shell probes once; they run at session start and on demand, with a colour-coded
+aggregate in the widget and a `/checks` command to re-run them.
+
+Config is a JSON file at `~/.config/pidev-checks/config.json`, or a project-local
+`.pi/checks/config.json` which replaces it for that session. See the
+[package README](packages/checks/README.md) for the schema and the check states.
+
+### @pidev/self-help
+
+Pi tells the model which skills exist, but not which extensions are installed.
+This one closes the gap: it resolves the packages in Pi's effective settings and
+adds an `extensions` section to the system prompt, so the agent knows a package
+exists and where its README lives. It advertises **locations, not content** — the
+agent reads the README with the ordinary `read` tool when asked. A `/self-help`
+command shows the same audit to you.
+
+### @pidev/term-image
+
+An agent editing TUI rendering has no way to see the result; `tmux capture-pane`
+gives text, which drops colour and attributes. This captures the pane with ANSI
+escape sequences, renders it through an `@xterm/headless` cell grid to a PNG, and
+ships a skill that tells the agent when to reach for it. The CLI takes a tmux
+target and an output path.
+
+## Repository layout
 
 ```
 pidev-mono/
-├── packages/
-│   ├── config/        — @pidev/config: shared config I/O library (not an extension)
-│   ├── checks/        — @pidev/checks: environment precondition checks beside the editor
-│   ├── hello/         — @pidev/hello: example extension (tool + command + replay)
-│   └── test-utils/    — @pidev/test-utils: private shared test fixtures (not published)
-├── test/setup.ts      — repo-wide Vitest setup (HOME stub, env hygiene, singleton resets)
-├── scripts/           — release pipeline + repo guards (host-provided deps, file sizes)
-├── vitest.config.ts   — single Vitest runner over `packages/*/**/*.test.ts`
-├── tsconfig.base.json — single shared TS config (noEmit; packages publish raw .ts)
-└── biome.json         — single shared lint/format config
+├── packages/          — one directory per package (see below)
+├── test/setup.ts      — repo-wide Vitest setup
+├── scripts/           — release pipeline + repo guards
+├── vitest.config.ts   — one Vitest runner over `packages/*/**/*.test.ts`
+├── tsconfig.base.json — shared TS config (noEmit; packages publish raw .ts)
+└── biome.json         — shared lint/format config
 ```
 
-**Build model**: `noEmit: true` everywhere. Packages publish raw `.ts`; Pi loads
-`.ts` directly via the `pi` manifest field. No `dist/`, no per-package tsconfig.
+The folder `packages/` also holds packages that exist only to support development.
 
-## Commands
+They are not part of the user-facing surface:
 
-| Command | Description |
-| --- | --- |
-| `npm install` | One install at root; workspace symlinks under `node_modules/` |
-| `npm run check` | Host-provided-dep guard → Biome (`--write --error-on-warnings`) → `tsc --noEmit` |
-| `npm run check:host-provided-deps` | No host-provided package in an install-time dep field; no unaliased `typebox` import |
-| `npm test` | Vitest at root across every package |
-| `npm run coverage` | Vitest with V8 coverage |
-| `node scripts/sync-versions.js` | Verify lockstep + rewrite intra-monorepo deps to `^<version>` |
-| `node scripts/release.mjs <patch\|minor\|major\|x.y.z>` | Cut a lockstep release |
+- **`hello`** — an example of the extension patterns a new package should copy.
+- **`config`** — a small, stateless config I/O library shared by siblings.
+- **`test-utils`** — private test fixtures (`"private": true`, never published).
 
-Husky hooks (local-only): `pre-commit` runs the guards + `npm run check` and
-restages formatter rewrites; `pre-push` runs the full coverage gate.
-
-## Conventions
-
-- **Lockstep versions** — every `packages/*/package.json` shares one version,
-  enforced by `sync-versions.js`. Directory `packages/<feature>` ↔ npm `@pidev/<feature>`.
-- **Sibling deps as `peerDependencies: "*"`**; host-provided packages
-  (`@earendil-works/pi-*`, `typebox`) are **never** `dependencies`.
-- **`pi` manifest field** — `pi.extensions: ["./index.ts"]` tells Pi which module
-  default-exports the extension factory.
-- **`files` arrays** explicitly list every shipped `.ts` plus asset directories;
-  a `ship-manifest.test.ts` proves the tarball is complete.
-- **Co-located tests** — `*.test.ts` next to sources; the root include glob finds them.
-- **`type: "module"`** everywhere, Node16 resolution, relative imports use `.js`.
-- **No decision-code citations** in committed `.ts` — comments state the contract.
-
-## Adding a sibling package
-
-1. Create `packages/<name>/` with `package.json` at the lockstep version,
-   `pi.extensions: ["./index.ts"]`, and the relevant `peerDependencies`.
-2. Populate `files` with every shipped `.ts` + asset directory.
-3. Add a `ship-manifest.test.ts` and co-located `*.test.ts` files.
-4. Add `"test": "vitest run"` to the package scripts.
-5. Run `node scripts/sync-versions.js` to wire intra-monorepo deps.
-6. Add a `CHANGELOG.md` containing `## [Unreleased]`.
-7. If the package owns module-level singleton state, export a reset function and
-   wire it into `test/setup.ts` `beforeEach`.
+**Build model**: `noEmit` everywhere. Packages publish raw `.ts`; Pi loads them
+directly via the `pi` manifest field. There is no `dist/` and no per-package
+tsconfig. This maybe subject to change.
