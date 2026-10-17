@@ -1,6 +1,15 @@
 import { makeTheme } from "@pidev/test-utils";
 import { describe, expect, it } from "vitest";
-import { aggregateOf, DEFAULT_TAIL_BYTES, reportText, reportType, tail, widgetLines } from "./render.js";
+import {
+	aggregateOf,
+	changeNotice,
+	DEFAULT_TAIL_BYTES,
+	reportText,
+	reportType,
+	stateChanges,
+	tail,
+	widgetLines,
+} from "./render.js";
 import type { CheckResult, CheckState, CheckStore } from "./state/store.js";
 
 function result(name: string, state: CheckState): CheckResult {
@@ -84,6 +93,43 @@ describe("reportType", () => {
 	it("is info while neutral or all-passed", () => {
 		expect(reportType(store([result("a", "passed")]))).toBe("info");
 		expect(reportType(store([result("a", "running")]))).toBe("info");
+	});
+});
+
+describe("stateChanges / changeNotice", () => {
+	it("reports transitions by name", () => {
+		const changes = stateChanges(
+			[
+				{ ...result("a", "failed"), code: 1 },
+				{ ...result("b", "passed"), code: 0 },
+			],
+			[
+				{ ...result("a", "passed"), code: 0 },
+				{ ...result("b", "failed"), code: 1 },
+			],
+		);
+
+		expect(changes).toEqual([
+			{ name: "a", from: "failed", to: "passed" },
+			{ name: "b", from: "passed", to: "failed" },
+		]);
+	});
+
+	it("is undefined when nothing changed", () => {
+		const same = [{ ...result("a", "passed"), code: 0 }];
+		expect(changeNotice(same, same)).toBeUndefined();
+	});
+
+	it("reads as improved when every transition now passes", () => {
+		expect(
+			changeNotice([{ ...result("jaeger", "failed"), code: 7 }], [{ ...result("jaeger", "passed"), code: 0 }]),
+		).toBe("Environment precondition improved: jaeger: failed -> passed. Checks now 1/1 pass.");
+	});
+
+	it("reads as changed for a regression", () => {
+		expect(
+			changeNotice([{ ...result("jaeger", "passed"), code: 0 }], [{ ...result("jaeger", "failed"), code: 7 }]),
+		).toBe("Environment precondition changed: jaeger: passed -> failed. Checks now 0/1 pass.");
 	});
 });
 

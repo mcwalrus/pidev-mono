@@ -69,23 +69,38 @@ naming the checks that need attention.
 
 ## The `/checks` command
 
-- `/checks` prints each check's name, state, duration, and exit code, the
-  last-run time, and a bounded tail of any captured stdout/stderr. A non-passed
-  check with no output still reports `no output captured (exit N)`, so a silent
-  failure is diagnosable. The report is raised as an error when any check needs
-  attention, and as info otherwise.
-- `/checks run` re-runs every check, refreshes the surfaces, then prints.
+- `/checks` re-runs every check, refreshes the surfaces, then prints each
+  check's name, state, duration, and exit code, the last-run time, and a
+  bounded tail of any captured stdout/stderr. A non-passed check with no output
+  still reports `no output captured (exit N)`, so a silent failure is
+  diagnosable. The report is raised as an error when any check needs attention,
+  and as info otherwise.
+- `/checks run` is accepted as an alias and behaves identically.
 - Any other argument prints usage and runs nothing.
 
 No background timer or periodic re-run; results refresh only on session start
-and on `/checks run`.
+and on `/checks`.
+
+## Model notice
+
+When a `/checks` rerun changes any check's state, the next model prompt carries
+one note: where the checks stand and what changed. For example:
+
+```
+Environment precondition improved: jaeger-port-forward: failed -> passed. Checks now 1/1 pass.
+```
+
+It reads `improved` when every transition now passes, and `changed` otherwise
+(for example a regression). The note is injected once, on the first prompt after
+the change, through `before_agent_start`; a later change replaces it. Nothing is
+injected when the state is unchanged.
 
 ## Behaviour
 
 Checks run automatically on `session_start` **without blocking** the session.
-Startup, `/checks run`, and shutdown are the only triggers. Every configured
-check runs in a single pass, concurrently under a cap of four, and always
-reports in config order.
+Startup, `/checks`, and shutdown are the only triggers. Every configured check
+runs in a single pass, concurrently under a cap of four, and always reports in
+config order.
 
 Checks are **advisory and read-only**. The extension launches nothing except
 the declared commands, owns no resources, and persists no logs or results

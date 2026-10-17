@@ -1,4 +1,4 @@
-import type { CheckResult, CheckStore } from "./state/store.js";
+import type { CheckResult, CheckState, CheckStore } from "./state/store.js";
 
 export interface Foreground {
 	fg(color: string, text: string): string;
@@ -22,6 +22,38 @@ export function aggregateOf(results: readonly CheckResult[]): Aggregate {
 	if (results.length === 0) return "neutral";
 	if (results.some((result) => result.state === "pending" || result.state === "running")) return "neutral";
 	return results.every((result) => result.state === "passed") ? "all-passed" : "attention";
+}
+
+/** A check whose state differs between two runs. */
+export interface CheckTransition {
+	name: string;
+	from: CheckState;
+	to: CheckState;
+}
+
+/** Transitions between two settled runs, by name, in the order of `next`. */
+export function stateChanges(previous: readonly CheckResult[], next: readonly CheckResult[]): CheckTransition[] {
+	const before = new Map(previous.map((result) => [result.name, result.state]));
+	const changes: CheckTransition[] = [];
+	for (const result of next) {
+		const from = before.get(result.name);
+		if (from === undefined || from === result.state) continue;
+		changes.push({ name: result.name, from, to: result.state });
+	}
+	return changes;
+}
+
+/**
+ * Model-facing note for the next prompt: where the checks stand and what
+ * changed since the previous run. `undefined` when nothing changed.
+ */
+export function changeNotice(previous: readonly CheckResult[], next: readonly CheckResult[]): string | undefined {
+	const changes = stateChanges(previous, next);
+	if (changes.length === 0) return undefined;
+	const passed = next.filter((result) => result.state === "passed").length;
+	const improved = changes.every((change) => change.to === "passed");
+	const delta = changes.map((change) => `${change.name}: ${change.from} -> ${change.to}`).join(", ");
+	return `Environment precondition ${improved ? "improved" : "changed"}: ${delta}. Checks now ${passed}/${next.length} pass.`;
 }
 
 /** Lines for the widget beside the editor, coloured by the aggregate. */

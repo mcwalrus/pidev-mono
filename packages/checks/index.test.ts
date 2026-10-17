@@ -148,6 +148,21 @@ describe("session start", () => {
 		expect(report).toContain("postgres  failed");
 	});
 
+	it("re-runs every check on plain /checks", async () => {
+		saveJsonConfig(configPath(CONFIG_NAME), { checks: [{ name: "postgres", command: "pg_isready" }] });
+		const exec = vi.fn(async () => ({ stdout: "", stderr: "", code: 0, killed: false }));
+		const { pi, captured } = createMockPi({ exec });
+		register(pi);
+		const ctx = createMockCtx({ hasUI: true, ui: { theme: makeTheme() } });
+
+		await startSession(captured, ctx);
+		await vi.waitFor(() => expect(exec).toHaveBeenCalledTimes(1));
+
+		await captured.commands.get(COMMAND_NAME)!.handler("", ctx as never);
+
+		expect(exec).toHaveBeenCalledTimes(2);
+	});
+
 	it("shows the last-run time on the widget and in /checks", async () => {
 		saveJsonConfig(configPath(CONFIG_NAME), { checks: [{ name: "postgres", command: "pg_isready" }] });
 		const exec = vi.fn(async () => ({ stdout: "", stderr: "", code: 0, killed: false }));
@@ -177,7 +192,7 @@ describe("session start", () => {
 		await captured.commands.get(COMMAND_NAME)!.handler("wat", ctx as never);
 
 		expect(exec).toHaveBeenCalledTimes(1);
-		expect((ctx.ui.notify as ReturnType<typeof vi.fn>).mock.calls.at(-1)?.[0]).toContain("Usage: /checks [run]");
+		expect((ctx.ui.notify as ReturnType<typeof vi.fn>).mock.calls.at(-1)?.[0]).toContain("Usage: /checks");
 	});
 
 	it("aborts an in-flight run and clears the surfaces on shutdown", async () => {
