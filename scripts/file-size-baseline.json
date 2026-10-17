@@ -10,6 +10,15 @@
 		"packages/hello/hello.ts": 79,
 		"packages/hello/index.ts": 33,
 		"packages/hello/ship-manifest.test.ts": 8,
-		"packages/hello/state/store.ts": 71
+		"packages/hello/state/store.ts": 71,
+		"packages/term-image/capture.test.ts": 25,
+		"packages/term-image/capture.ts": 34,
+		"packages/term-image/cli.test.ts": 43,
+		"packages/term-image/cli.ts": 84,
+		"packages/term-image/entry.test.ts": 10,
+		"packages/term-image/index.ts": 13,
+		"packages/term-image/render.test.ts": 57,
+		"packages/term-image/render.ts": 142,
+		"packages/term-image/ship-manifest.test.ts": 8
 	}
 }

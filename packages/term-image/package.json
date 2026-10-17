@@ -1,0 +1,51 @@
+{
+	"name": "@pidev/term-image",
+	"version": "0.1.0",
+	"description": "Agent-first terminal capture: a tmux pane in, a PNG out, plus a skill that tells an agent when to use it.",
+	"keywords": [
+		"pi-package",
+		"pidev",
+		"tmux",
+		"tui",
+		"screenshot",
+		"devtool"
+	],
+	"type": "module",
+	"license": "MIT",
+	"author": "pidev",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/mcwalrus/pidev-mono.git",
+		"directory": "packages/term-image"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"bin": {
+		"term-image": "./cli.ts"
+	},
+	"scripts": {
+		"test": "vitest run"
+	},
+	"files": [
+		"index.ts",
+		"capture.ts",
+		"render.ts",
+		"cli.ts",
+		"skills",
+		"README.md",
+		"CHANGELOG.md"
+	],
+	"exports": {
+		".": "./index.ts"
+	},
+	"pi": {
+		"skills": [
+			"./skills"
+		]
+	},
+	"dependencies": {
+		"@xterm/headless": "5.5.0",
+		"canvas": "3.2.3"
+	}
+}
