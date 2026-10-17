@@ -1,9 +1,15 @@
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { configPath, saveJsonConfig } from "@pidev/config";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CONFIG_NAME, loadChecksConfig, PROJECT_CONFIG_FILE, parseChecksConfig } from "./config.js";
+import {
+	CONFIG_NAME,
+	loadChecksConfig,
+	PROJECT_CONFIG_FILE,
+	parseChecksConfig,
+	resolveChecksConfig,
+} from "./config.js";
 
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -81,6 +87,30 @@ describe("parseChecksConfig", () => {
 		});
 		expect(result.map((entry) => entry.command)).toEqual(["a", "b", "c", "d"]);
 		expect(warn).toHaveBeenCalledOnce();
+	});
+});
+
+describe("resolveChecksConfig", () => {
+	it("reports the XDG path applied", () => {
+		const path = configPath(CONFIG_NAME);
+		saveJsonConfig(path, { checks: [{ name: "postgres", command: "pg_isready" }] });
+		expect(resolveChecksConfig()).toEqual({
+			definitions: [{ name: "postgres", command: "pg_isready" }],
+			path,
+		});
+	});
+
+	it("reports the project path when it wins", () => {
+		const cwd = mkdtempSync(join(tmpdir(), "pidev-checks-project-"));
+		const path = join(cwd, PROJECT_CONFIG_FILE);
+		saveJsonConfig(path, { checks: [{ name: "local", command: "true" }] });
+		saveJsonConfig(configPath(CONFIG_NAME), { checks: [{ name: "global", command: "true" }] });
+		expect(resolveChecksConfig(cwd)).toEqual({ definitions: [{ name: "local", command: "true" }], path });
+	});
+
+	it("reports no path when no file exists", () => {
+		rmSync(configPath(CONFIG_NAME), { force: true });
+		expect(resolveChecksConfig()).toEqual({ definitions: [], path: undefined });
 	});
 });
 

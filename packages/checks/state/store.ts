@@ -16,10 +16,12 @@ export interface CheckStore {
 	results: CheckResult[];
 	running: boolean;
 	lastRunAt: number | null;
+	/** Absolute path of the config file the results came from; `null` when none exists. */
+	configPath: string | null;
 }
 
 export function createCheckStore(): CheckStore {
-	return { results: [], running: false, lastRunAt: null };
+	return { results: [], running: false, lastRunAt: null, configPath: null };
 }
 
 /** Seed a pending result per definition so surfaces show every check before it runs. */

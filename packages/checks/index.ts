@@ -12,14 +12,21 @@
  */
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { type CheckDefinition, loadChecksConfig } from "./config.js";
+import { type ResolvedChecks, resolveChecksConfig } from "./config.js";
 import { changeNotice, reportText, reportType, statusText, widgetLines } from "./render.js";
 import { type CheckExecutor, runChecks } from "./runner.js";
 import { type CheckResult, createCheckStore, seedResults } from "./state/store.js";
 import { registerChecksTool } from "./tool.js";
 
 export type { CheckDefinition } from "./config.js";
-export { CONFIG_NAME, DEFAULT_TIMEOUT_MS, loadChecksConfig, PROJECT_CONFIG_FILE, parseChecksConfig } from "./config.js";
+export {
+	CONFIG_NAME,
+	DEFAULT_TIMEOUT_MS,
+	loadChecksConfig,
+	PROJECT_CONFIG_FILE,
+	parseChecksConfig,
+	resolveChecksConfig,
+} from "./config.js";
 export type { Aggregate, CheckTransition, Foreground } from "./render.js";
 export {
 	aggregateOf,
@@ -55,19 +62,20 @@ export default function register(pi: ExtensionAPI): void {
 		ctx.ui.setStatus(STATUS_KEY, statusText(store, theme));
 	};
 
-	const run = async (ctx: ExtensionContext, definitions: CheckDefinition[]): Promise<CheckResult[]> => {
+	const run = async (ctx: ExtensionContext, resolved: ResolvedChecks): Promise<CheckResult[]> => {
 		const previous = store.results;
 		controller?.abort();
 		const token = ++runToken;
 		const abort = new AbortController();
 		controller = abort;
-		store.results = seedResults(definitions);
+		store.results = seedResults(resolved.definitions);
+		store.configPath = resolved.path ?? null;
 		store.running = true;
 		store.lastRunAt = null;
 		paint(ctx);
 
 		const executor: CheckExecutor = (command, args, options) => pi.exec(command, args, options);
-		const results = await runChecks(definitions, executor, {
+		const results = await runChecks(resolved.definitions, executor, {
 			cwd: ctx.cwd,
 			signal: abort.signal,
 			onUpdate: (results) => {
@@ -88,10 +96,10 @@ export default function register(pi: ExtensionAPI): void {
 	};
 
 	pi.on("session_start", (_event, ctx) => {
-		void run(ctx, loadChecksConfig(ctx.cwd));
+		void run(ctx, resolveChecksConfig(ctx.cwd));
 	});
 
-	registerChecksTool(pi, { store, run: (ctx) => run(ctx, loadChecksConfig(ctx.cwd)) });
+	registerChecksTool(pi, { store, run: (ctx) => run(ctx, resolveChecksConfig(ctx.cwd)) });
 
 	pi.on("before_agent_start", () => {
 		if (pendingNotice === undefined) return undefined;
@@ -107,6 +115,7 @@ export default function register(pi: ExtensionAPI): void {
 		store.results = [];
 		store.running = false;
 		store.lastRunAt = null;
+		store.configPath = null;
 		pendingNotice = undefined;
 		if (ctx.hasUI) {
 			ctx.ui.setWidget(WIDGET_KEY, undefined);
@@ -122,7 +131,7 @@ export default function register(pi: ExtensionAPI): void {
 				ctx.ui.notify("Usage: /checks", "info");
 				return;
 			}
-			await run(ctx, loadChecksConfig(ctx.cwd));
+			await run(ctx, resolveChecksConfig(ctx.cwd));
 			ctx.ui.notify(reportText(store), reportType(store));
 		},
 	});

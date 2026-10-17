@@ -1,8 +1,11 @@
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { configPath, saveJsonConfig } from "@pidev/config";
 import { assertToolContract, createMockCtx, createMockPi, makeTheme } from "@pidev/test-utils";
 import { Value } from "typebox/value";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import register, { CONFIG_NAME } from "./index.js";
+import register, { CONFIG_NAME, PROJECT_CONFIG_FILE } from "./index.js";
 import { ChecksParams, TOOL_NAME } from "./tool.js";
 
 type ExecStub = (command: string) => Promise<{ stdout: string; stderr: string; code: number; killed: boolean }>;
@@ -55,7 +58,7 @@ describe("checks tool status", () => {
 		await start();
 		await settle();
 
-		expect(await call({})).toBe("all passed");
+		expect(await call({})).toBe(`all passed (config: ${configPath(CONFIG_NAME)})`);
 	});
 
 	it("names each non-passed check and its state without any captured output", async () => {
@@ -74,7 +77,7 @@ describe("checks tool status", () => {
 		await settle();
 
 		const text = await call({});
-		expect(text).toBe("1 of 2 passed: db failed");
+		expect(text).toBe(`1 of 2 passed: db failed (config: ${configPath(CONFIG_NAME)})`);
 		expect(text).not.toContain("secret-token");
 	});
 
@@ -86,7 +89,27 @@ describe("checks tool status", () => {
 		await captured.events.get("session_start")![0]({}, ctx);
 		const result = await captured.tools.get(TOOL_NAME)!.execute!("id", {}, undefined, undefined, ctx as never);
 
-		expect((result.content[0] as { text: string }).text).toBe("none configured");
+		expect((result.content[0] as { text: string }).text).toBe(`none configured (config: ${configPath(CONFIG_NAME)})`);
+	});
+
+	it("points to the project-local config file that was applied", async () => {
+		const cwd = mkdtempSync(join(tmpdir(), "pidev-checks-tool-"));
+		const path = join(cwd, PROJECT_CONFIG_FILE);
+		saveJsonConfig(path, { checks: [{ name: "postgres", command: "pg_isready" }] });
+		const exec = vi.fn(async () => pass);
+		const { pi, captured } = createMockPi({ exec });
+		register(pi);
+		const ctx = createMockCtx({ hasUI: true, cwd, ui: { theme: makeTheme() } });
+
+		await captured.events.get("session_start")![0]({}, ctx);
+		const result = await vi.waitFor(async () => {
+			const resolved = await captured.tools.get(TOOL_NAME)!.execute!("id", {}, undefined, undefined, ctx as never);
+			const text = (resolved.content[0] as { text: string }).text;
+			expect(text).toBe(`all passed (config: ${path})`);
+			return text;
+		});
+
+		expect(result).toContain(path);
 	});
 });
 
@@ -101,10 +124,10 @@ describe("checks tool run", () => {
 
 		await start();
 		await settle();
-		expect(await call({})).toBe("0 of 1 passed: postgres failed");
+		expect(await call({})).toBe(`0 of 1 passed: postgres failed (config: ${configPath(CONFIG_NAME)})`);
 
 		code = 0;
-		expect(await call({ action: "run" })).toBe("all passed");
+		expect(await call({ action: "run" })).toBe(`all passed (config: ${configPath(CONFIG_NAME)})`);
 		expect(exec).toHaveBeenCalledTimes(2);
 		expect(lastWidget().join("\n")).toContain("1/1 passed");
 		expect(ctx.ui.setWidget).toHaveBeenCalled();

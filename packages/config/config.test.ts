@@ -10,6 +10,7 @@ import {
 	modelKey,
 	parseModelKey,
 	readEnvVar,
+	resolveJsonConfigPathWithLegacyFallback,
 	saveJsonConfig,
 	validateConfig,
 	validateGuidanceFields,
@@ -240,6 +241,24 @@ describe("loadJsonConfigWithLegacyFallback", () => {
 
 	it("returns {} when both XDG and legacy paths are missing", () => {
 		expect(loadJsonConfigWithLegacyFallback<Record<string, unknown>>(NAME)).toEqual({});
+	});
+
+	it("resolves the XDG path when present", () => {
+		const p = xdgConfigPath();
+		mkdirSync(dirname(p), { recursive: true });
+		writeFileSync(p, JSON.stringify({ from: "xdg" }), "utf-8");
+		expect(resolveJsonConfigPathWithLegacyFallback(NAME)).toBe(p);
+	});
+
+	it("resolves the legacy path when only legacy exists", () => {
+		const legacy = legacyConfigPath();
+		mkdirSync(dirname(legacy), { recursive: true });
+		writeFileSync(legacy, JSON.stringify({ from: "legacy" }), "utf-8");
+		expect(resolveJsonConfigPathWithLegacyFallback(NAME)).toBe(legacy);
+	});
+
+	it("resolves undefined when neither exists", () => {
+		expect(resolveJsonConfigPathWithLegacyFallback(NAME)).toBeUndefined();
 	});
 
 	it("warns + returns {} for a malformed XDG file and does NOT fall back to legacy", () => {

@@ -19,6 +19,7 @@ adheres to lockstep versioning across the pidev-mono workspace.
 - Duplicate check names warn once; both entries still run in config order.
 - A model-callable `checks` tool reports a one-line readiness summary, with
   `action: "run"` to re-run and `name` for one check's exit code and output tail.
+  The summary points at the config file that was applied.
 
 ### Changed
 

@@ -130,11 +130,23 @@ export function loadJsonConfig<T>(path: string): T {
  * @param file — config filename (defaults to "config.json")
  */
 export function loadJsonConfigWithLegacyFallback<T>(name: string, file: string = "config.json"): T {
+	const path = resolveJsonConfigPathWithLegacyFallback(name, file);
+	return path === undefined ? ({} as T) : loadJsonConfig<T>(path);
+}
+
+/**
+ * Resolve the path {@link loadJsonConfigWithLegacyFallback} would read: the XDG
+ * path when it exists (even if malformed), else the legacy
+ * `~/.config/<name>/<file>`. `undefined` when neither exists.
+ */
+export function resolveJsonConfigPathWithLegacyFallback(
+	name: string,
+	file: string = "config.json",
+): string | undefined {
 	const xdgPath = configPath(name, file);
-	if (existsSync(xdgPath)) {
-		return loadJsonConfig<T>(xdgPath);
-	}
-	return loadJsonConfig<T>(legacyConfigPath(name, file));
+	if (existsSync(xdgPath)) return xdgPath;
+	const legacyPath = legacyConfigPath(name, file);
+	return existsSync(legacyPath) ? legacyPath : undefined;
 }
 
 // ---------------------------------------------------------------------------

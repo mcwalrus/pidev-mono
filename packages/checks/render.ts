@@ -76,17 +76,18 @@ export function statusText(store: CheckStore, foreground: Foreground = identityF
 
 /** One-line model-facing summary of the current session results. Never includes captured output. */
 export function checkSummary(store: CheckStore): string {
-	if (store.results.length === 0) return "none configured";
+	const source = store.configPath === null ? "no config file" : `config: ${store.configPath}`;
+	if (store.results.length === 0) return `none configured (${source})`;
 	if (store.running || store.results.some((result) => result.state === "pending" || result.state === "running")) {
-		return "still running";
+		return `still running (${source})`;
 	}
 	const passed = passedCount(store);
-	if (passed === store.results.length) return "all passed";
+	if (passed === store.results.length) return `all passed (${source})`;
 	const attention = store.results
 		.filter((result) => result.state !== "passed")
 		.map((result) => `${result.name} ${result.state}`)
 		.join(", ");
-	return `${passed} of ${store.results.length} passed: ${attention}`;
+	return `${passed} of ${store.results.length} passed: ${attention} (${source})`;
 }
 
 /** One check's exit code and bounded output tail, for a model that names a check. */

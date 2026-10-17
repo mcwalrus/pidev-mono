@@ -7,6 +7,7 @@ export {
 	modelKey,
 	parseModelKey,
 	readEnvVar,
+	resolveJsonConfigPathWithLegacyFallback,
 	saveJsonConfig,
 	validateConfig,
 	validateGuidanceFields,

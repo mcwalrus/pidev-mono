@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { loadJsonConfig, loadJsonConfigWithLegacyFallback } from "@pidev/config";
+import { loadJsonConfig, resolveJsonConfigPathWithLegacyFallback } from "@pidev/config";
 import { Type } from "typebox";
 import { Value } from "typebox/value";
 
@@ -67,17 +67,31 @@ export function parseChecksConfig(raw: unknown): CheckDefinition[] {
 	return definitions;
 }
 
+export interface ResolvedChecks {
+	definitions: CheckDefinition[];
+	/** Absolute path of the config file applied; `undefined` when no file exists. */
+	path: string | undefined;
+}
+
 /**
- * Load checks for a session. When `cwd` is given, a project-local
- * `.pi/checks/config.json` under it is checked first and, if present, wins
- * outright; otherwise the user-global XDG config is used with legacy fallback.
- * A malformed file warns via the shared loader and yields no checks; never
- * throws.
+ * Resolve checks for a session and the file they came from. When `cwd` is
+ * given, a project-local `.pi/checks/config.json` under it is checked first
+ * and, if present, wins outright; otherwise the user-global XDG config is used
+ * with legacy fallback. A malformed file warns via the shared loader and
+ * yields no checks; never throws.
  */
-export function loadChecksConfig(cwd?: string): CheckDefinition[] {
+export function resolveChecksConfig(cwd?: string): ResolvedChecks {
 	if (cwd) {
 		const projectPath = join(cwd, PROJECT_CONFIG_FILE);
-		if (existsSync(projectPath)) return parseChecksConfig(loadJsonConfig<unknown>(projectPath));
+		if (existsSync(projectPath)) {
+			return { definitions: parseChecksConfig(loadJsonConfig<unknown>(projectPath)), path: projectPath };
+		}
 	}
-	return parseChecksConfig(loadJsonConfigWithLegacyFallback<unknown>(CONFIG_NAME));
+	const path = resolveJsonConfigPathWithLegacyFallback(CONFIG_NAME);
+	return { definitions: parseChecksConfig(path === undefined ? {} : loadJsonConfig<unknown>(path)), path };
+}
+
+/** The checks for a session, without the source file. See {@link resolveChecksConfig}. */
+export function loadChecksConfig(cwd?: string): CheckDefinition[] {
+	return resolveChecksConfig(cwd).definitions;
 }

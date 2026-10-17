@@ -18,8 +18,13 @@ function result(name: string, state: CheckState): CheckResult {
 	return { name, state, code: null, durationMs: null, stdout: "", stderr: "", finishedAt: null };
 }
 
-function store(results: CheckResult[], running = false, lastRunAt: number | null = null): CheckStore {
-	return { results, running, lastRunAt };
+function store(
+	results: CheckResult[],
+	running = false,
+	lastRunAt: number | null = null,
+	configPath: string | null = null,
+): CheckStore {
+	return { results, running, lastRunAt, configPath };
 }
 
 describe("aggregateOf", () => {
@@ -74,10 +79,21 @@ describe("tail", () => {
 
 describe("checkSummary", () => {
 	it("maps the run state to one line", () => {
-		expect(checkSummary(store([]))).toBe("none configured");
-		expect(checkSummary(store([result("a", "running")], true))).toBe("still running");
-		expect(checkSummary(store([result("a", "passed"), result("b", "passed")]))).toBe("all passed");
-		expect(checkSummary(store([result("a", "passed"), result("b", "failed")]))).toBe("1 of 2 passed: b failed");
+		expect(checkSummary(store([]))).toBe("none configured (no config file)");
+		expect(checkSummary(store([result("a", "running")], true))).toBe("still running (no config file)");
+		expect(checkSummary(store([result("a", "passed"), result("b", "passed")]))).toBe("all passed (no config file)");
+		expect(checkSummary(store([result("a", "passed"), result("b", "failed")]))).toBe(
+			"1 of 2 passed: b failed (no config file)",
+		);
+	});
+
+	it("points to the config file that was applied", () => {
+		expect(checkSummary(store([], false, null, "/tmp/checks.json"))).toBe(
+			"none configured (config: /tmp/checks.json)",
+		);
+		expect(checkSummary(store([result("a", "passed")], false, null, "/tmp/checks.json"))).toBe(
+			"all passed (config: /tmp/checks.json)",
+		);
 	});
 });
 
