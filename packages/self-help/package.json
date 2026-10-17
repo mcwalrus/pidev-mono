@@ -1,0 +1,42 @@
+{
+	"name": "@pidev/self-help",
+	"version": "0.1.0",
+	"description": "Pi extension. Advertises installed extension packages and their README locations in the system prompt, plus a /self-help audit command.",
+	"keywords": [
+		"pi-package",
+		"pi-extension",
+		"pidev",
+		"self-help",
+		"documentation"
+	],
+	"type": "module",
+	"license": "MIT",
+	"author": "pidev",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/mcwalrus/pidev-mono.git",
+		"directory": "packages/self-help"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"test": "vitest run"
+	},
+	"files": [
+		"index.ts",
+		"resolve.ts",
+		"section.ts",
+		"README.md",
+		"CHANGELOG.md"
+	],
+	"pi": {
+		"extensions": [
+			"./index.ts"
+		]
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-coding-agent": "*",
+		"typebox": "*"
+	}
+}
