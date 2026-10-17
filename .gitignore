@@ -13,11 +13,8 @@ packages/*/node_modules
 .claude/
 skills-lock.json
 
-# Local-only pipeline artifacts (guidance/ is intentionally tracked — hand-curated
-# AI-assistant context, not run state).
-.rpiv/artifacts/
-.rpiv/workflows/
-thoughts/
+# Personal Workflow
+tasks/
 
 # Environment
 .env
