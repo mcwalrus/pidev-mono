@@ -1,4 +1,5 @@
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import { createMockCtx, createMockPi } from "@pidev/test-utils";
@@ -9,7 +10,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 // under the host, which aliases a matching build; tests substitute the two
 // path helpers the extension imports.
 vi.mock("@earendil-works/pi-coding-agent", () => ({
-	getAgentDir: () => `${process.env.HOME}/.pi/agent`,
+	getAgentDir: () => process.env.PI_CODING_AGENT_DIR ?? `${process.env.HOME}/.pi/agent`,
 	CONFIG_DIR_NAME: ".pi",
 }));
 
@@ -26,13 +27,13 @@ afterEach(() => {
 	}
 });
 
-function makeInstalledPackage(
-	agentDir: string,
+function makePackageAt(
+	nodeModules: string,
 	name: string,
 	manifest: Record<string, unknown> = {},
 	files: Record<string, string> = {},
 ): string {
-	const root = join(agentDir, "npm", "node_modules", name);
+	const root = join(nodeModules, name);
 	mkdirSync(root, { recursive: true });
 	writeFileSync(join(root, "package.json"), JSON.stringify({ name, ...manifest }));
 	for (const [file, content] of Object.entries(files)) {
@@ -40,14 +41,26 @@ function makeInstalledPackage(
 		mkdirSync(dirname(path), { recursive: true });
 		writeFileSync(path, content);
 	}
-	created.push(join(agentDir, "npm", "node_modules", name.split("/")[0]!));
+	created.push(join(nodeModules, name.split("/")[0]!));
 	return root;
 }
 
-async function advertisedSection(packages: unknown, hasUI = false): Promise<string | undefined> {
+function makeInstalledPackage(
+	agentDir: string,
+	name: string,
+	manifest: Record<string, unknown> = {},
+	files: Record<string, string> = {},
+): string {
+	return makePackageAt(join(agentDir, "npm", "node_modules"), name, manifest, files);
+}
+
+async function advertisedSection(
+	packages: unknown,
+	options: { hasUI?: boolean; cwd?: string } = {},
+): Promise<string | undefined> {
 	const { pi, captured } = createMockPi({ getSettings: () => ({ packages }) as never });
 	register(pi);
-	const ctx = createMockCtx({ hasUI });
+	const ctx = createMockCtx({ hasUI: options.hasUI ?? false, cwd: options.cwd });
 	await captured.events.get("session_start")![0]({ type: "session_start", reason: "startup" }, ctx);
 	const event = { systemPromptOptions: { sections: {} as Record<string, string> } };
 	await captured.events.get("before_agent_start")![0](event, ctx);
@@ -90,7 +103,7 @@ describe("advertisement", () => {
 
 	it("produces the section with hasUI false", async () => {
 		makeInstalledPackage(getAgentDir(), "@acme/headless", {}, { "README.md": "# Headless" });
-		expect(await advertisedSection(["npm:@acme/headless"], false)).toContain("@acme/headless");
+		expect(await advertisedSection(["npm:@acme/headless"], { hasUI: false })).toContain("@acme/headless");
 	});
 });
 
@@ -107,6 +120,82 @@ describe("source safety", () => {
 		expect(section).not.toContain("foo/bar");
 		expect(section).not.toContain("escape");
 		expect(section).toContain("@acme/kept");
+	});
+});
+
+describe("documentation", () => {
+	it("carries the manifest description and the resolved README path", async () => {
+		const root = makeInstalledPackage(
+			getAgentDir(),
+			"@acme/documented",
+			{ description: "Documents things" },
+			{ "README.md": "# Body that must not leak" },
+		);
+		const section = await advertisedSection(["npm:@acme/documented"]);
+		expect(section).toContain("<description>Documents things</description>");
+		expect(section).toContain(`<readme>${join(root, "README.md")}</readme>`);
+		expect(section).not.toContain("Body that must not leak");
+	});
+
+	it("recognises a lowercase readme.md", async () => {
+		const root = makeInstalledPackage(getAgentDir(), "@acme/lower", {}, { "readme.md": "# Lower" });
+		const section = await advertisedSection(["npm:@acme/lower"]);
+		expect(section).toContain(`<readme>${join(root, "readme.md")}</readme>`);
+	});
+
+	it("marks a package with no README as undocumented", async () => {
+		makeInstalledPackage(getAgentDir(), "@acme/bare", {});
+		const section = await advertisedSection(["npm:@acme/bare"]);
+		expect(section).toContain("<undocumented>No README.md at the package root.</undocumented>");
+		expect(section).not.toContain("<readme>");
+	});
+
+	it("still advertises the location when package.json is missing or unreadable", async () => {
+		const root = join(getAgentDir(), "npm", "node_modules", "@acme", "broken");
+		mkdirSync(root, { recursive: true });
+		created.push(join(getAgentDir(), "npm", "node_modules", "@acme"));
+		const section = await advertisedSection(["npm:@acme/broken"]);
+		expect(section).toContain(`<location>${join(root, "package.json")}</location>`);
+		expect(section).not.toContain("<description>");
+		expect(section).toContain("<undocumented>");
+	});
+});
+
+describe("scopes", () => {
+	it("resolves the user scope under the configured agent directory", async () => {
+		const custom = join(tmpdir(), `self-help-agent-${process.pid}-${Date.now()}`);
+		created.push(custom);
+		process.env.PI_CODING_AGENT_DIR = custom;
+		const root = makePackageAt(join(custom, "npm", "node_modules"), "@acme/relocated", {}, { "README.md": "# x" });
+		const section = await advertisedSection(["npm:@acme/relocated"]);
+		delete process.env.PI_CODING_AGENT_DIR;
+		expect(section).toContain(join(root, "package.json"));
+	});
+
+	it("resolves the project scope under the session working directory", async () => {
+		const cwd = join(tmpdir(), `self-help-cwd-${process.pid}-${Date.now()}`);
+		created.push(cwd);
+		const root = makePackageAt(join(cwd, ".pi", "npm", "node_modules"), "@acme/project", {}, { "README.md": "# p" });
+		const section = await advertisedSection(["npm:@acme/project"], { cwd });
+		expect(section).toContain(join(root, "package.json"));
+	});
+
+	it("advertises both scopes with the project copy active", async () => {
+		const cwd = join(tmpdir(), `self-help-both-${process.pid}-${Date.now()}`);
+		created.push(cwd);
+		makeInstalledPackage(getAgentDir(), "@acme/both", {}, { "README.md": "# u" });
+		const projectRoot = makePackageAt(
+			join(cwd, ".pi", "npm", "node_modules"),
+			"@acme/both",
+			{},
+			{
+				"README.md": "# p",
+			},
+		);
+		const section = await advertisedSection(["npm:@acme/both"], { cwd });
+		expect(section!.match(/<name>@acme\/both<\/name>/g)).toHaveLength(2);
+		expect(section).toContain(`<location>${join(projectRoot, "package.json")}</location>`);
+		expect(section).toContain("<active>true</active>");
 	});
 });
 

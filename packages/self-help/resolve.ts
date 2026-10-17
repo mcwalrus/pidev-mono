@@ -1,4 +1,4 @@
-import { existsSync, statSync } from "node:fs";
+import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, resolve as resolvePath, sep } from "node:path";
 
 export type PackageScope = "user" | "project";
@@ -14,6 +14,8 @@ export interface ResolvedPackage {
 	description?: string;
 	/** Absolute path to the package's `README.md`, when one is present. */
 	readme?: string;
+	/** True for the copy Pi loads when the same package exists in more than one scope. */
+	active?: boolean;
 }
 
 export interface ResolveContext {
@@ -94,19 +96,59 @@ function installedAt(context: ResolveContext, scope: PackageScope, name: string)
 	}
 }
 
+function resolveInstall(source: string, name: string, scope: PackageScope, root: string): ResolvedPackage {
+	return {
+		source,
+		scope,
+		location: join(root, "package.json"),
+		...readManifest(root, name),
+		...readReadme(root),
+	};
+}
+
 export function resolvePackages(packages: unknown, context: ResolveContext): ResolvedPackage[] {
 	const out: ResolvedPackage[] = [];
 	for (const source of extractSources(packages)) {
 		const parsed = parseNpmSource(source);
 		if (!parsed) continue;
-		const root = installedAt(context, "user", parsed.name);
-		if (!root) continue;
-		out.push({
-			source,
-			name: parsed.name,
-			scope: "user",
-			location: join(root, "package.json"),
-		});
+		const projectRoot = installedAt(context, "project", parsed.name);
+		const userRoot = installedAt(context, "user", parsed.name);
+		const project = projectRoot ? resolveInstall(source, parsed.name, "project", projectRoot) : undefined;
+		const user = userRoot ? resolveInstall(source, parsed.name, "user", userRoot) : undefined;
+		if (project && user) project.active = true;
+		if (project) out.push(project);
+		if (user) out.push(user);
 	}
 	return out;
+}
+
+function readManifest(root: string, fallbackName: string): Pick<ResolvedPackage, "name" | "description"> {
+	try {
+		const parsed: unknown = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+		if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) return { name: fallbackName };
+		const manifest = parsed as { name?: unknown; description?: unknown };
+		const name = typeof manifest.name === "string" && manifest.name !== "" ? manifest.name : fallbackName;
+		if (typeof manifest.description === "string") return { name, description: manifest.description };
+		return { name };
+	} catch {
+		return { name: fallbackName };
+	}
+}
+
+/** Confirm a README at the package root: case-insensitive name match, regular file only. */
+function readReadme(root: string): Pick<ResolvedPackage, "readme"> {
+	let entries: string[];
+	try {
+		entries = readdirSync(root);
+	} catch {
+		return {};
+	}
+	const match = entries.find((entry) => entry.toLowerCase() === "readme.md");
+	if (match === undefined) return {};
+	const path = join(root, match);
+	try {
+		return lstatSync(path).isFile() ? { readme: path } : {};
+	} catch {
+		return {};
+	}
 }

@@ -21,7 +21,11 @@ function renderFull(packages: readonly ResolvedPackage[]): string {
 	for (const pkg of packages) {
 		lines.push("  <extension>");
 		lines.push(`    <name>${escapeXml(pkg.name)}</name>`);
+		if (pkg.description) lines.push(`    <description>${escapeXml(pkg.description)}</description>`);
 		lines.push(`    <location>${escapeXml(pkg.location)}</location>`);
+		if (pkg.active) lines.push("    <active>true</active>");
+		if (pkg.readme) lines.push(`    <readme>${escapeXml(pkg.readme)}</readme>`);
+		else lines.push("    <undocumented>No README.md at the package root.</undocumented>");
 		lines.push("  </extension>");
 	}
 	lines.push("</available_extensions>");
