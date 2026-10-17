@@ -19,6 +19,11 @@ A monorepo for Pi Agent CLI extensions for @earendil-works/pi-coding-agent.
 - Consider event lifecycle of the agent harness
 - Propose updates to local extensions used when challenged
 
+**APIs**
+
+* Context exposed to agents via extensions should be minimal
+* Consider elegance and usability of how models see tool-calls
+/
 ## Tools
 
 - Recipes - npm + justfile

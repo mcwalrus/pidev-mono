@@ -41,6 +41,8 @@ A Pi extension that reads a list of user-authored check commands from `~/.config
 27. As a Pi user, I want the widget to name the checks needing attention, so that I can see which precondition is broken without running `/checks`.
 28. As a Pi user, I want `/checks` output bounded by bytes as well as lines, so that one huge line cannot flood my view.
 29. As a Pi user, I want a duplicate check name to warn, so that a copy-paste mistake is visible rather than silent.
+30. As a Pi user, I want the agent to be able to ask whether the environment is ready, so that it adapts instead of failing mid-task.
+31. As a Pi user, I want the agent's view to be a short summary, not raw logs, so that my context stays small.
 
 ## Implementation Decisions
 
@@ -92,12 +94,14 @@ A Pi extension that reads a list of user-authored check commands from `~/.config
 - **Command.** `/checks` prints the latest results (name, state, duration, stdout/stderr tail bounded by both lines and bytes) and the last-run time; `/checks run` re-runs first, then prints. Unknown arguments print usage. No background timer and no periodic re-run.
 - **Logs.** Full stdout/stderr are retained per check for the session in memory; the command prints a tail bounded by both lines and bytes, so a single huge line cannot flood the transcript. No file persistence.
 - **No branch replay.** Results are session-scoped, not conversation state, so `hello`-style entry replay does not apply.
+- **Agent tool.** A model-callable `checks` tool reads the same session store as the command. Its default result is one minimal line — `all passed`, `N of M passed` with the non-passed names and states, `still running`, or `none configured`. Full stdout/stderr stays human-only on `/checks`; an optional `name` argument returns just that check's exit code and bounded output tail. The tool carries `promptSnippet`/`promptGuidelines` written for the model.
 
 ## Testing Decisions
 
 - **Good test.** Drive external behaviour: given a config and a stubbed executor, assert the states the widget and command report and the cancellation on shutdown. Assert no private function, internal call order, or private field.
 - **Modules tested.** Registration/lifecycle through the `ExtensionAPI` mock (widget, status, command output, abort on shutdown); config parse/validate as a pure unit; a contract-style test that the package's `pi` manifest and `files` are complete.
 - **Seam.** `pi.exec` via `createMockPi({ exec })` from `@pidev/test-utils`. No new seam.
+- **Tool.** The agent tool's shape is asserted with `assertToolContract`; its summary is a pure unit; its `run` action drives the mock executor like the command.
 - **Prior art.** `hello.register.test.ts` (capture tools/commands/events, fire `session_start`, invoke handlers), `config/config.test.ts` (config path and fs under the stubbed HOME), `hello/ship-manifest.test.ts`.
 - **Cases.** all-passed aggregate; mixed pass/fail; timed_out vs failed vs error distinguished; a failure does not stop later checks; `/checks run` re-invokes the executor and updates the surface; in-flight run aborted on `session_shutdown`; malformed config warns with zero checks; empty config renders neutral; duplicate names warn but both still run; neutral aggregate until a run settles; the widget names non-passed checks; two instances keep independent stores; `/checks run` aborts an in-flight run; `session_start` on `reload` re-runs.
 
@@ -106,7 +110,7 @@ A Pi extension that reads a list of user-authored check commands from `~/.config
 - Launching, supervising, restarting, or killing background processes or process trees.
 - Live or periodic change detection; polling; automatic mid-session re-checks.
 - Project-local rules beyond a first-found `.pi/checks/config.json` (see ticket 06); no merge with the user-global config and no `project_trust` integration.
-- An agent-facing tool exposing results; this is human-facing only in v1.
+- ~~An agent-facing tool exposing results~~ — retracted: a `checks` tool is now in scope (see Agent tool under Implementation Decisions).
 - Gating MCP connection or any other startup step on a check result.
 - Cross-session or cross-terminal shared results.
 - Persisting logs or results beyond the session; a structured stdout result schema.
@@ -122,4 +126,5 @@ A Pi extension that reads a list of user-authored check commands from `~/.config
 - Ticket 08 supersedes the `/checks` (show) versus `/checks run` split: `/checks` now always re-runs, and a state change is carried into the next model prompt as a one-shot `before_agent_start` note.
 - Ticket 07 closes a live gap in the failure path: a non-passed check now always reports its exit code, a silent check reports `no output captured (exit N)`, and the `/checks` report is raised as an error when anything needs attention.
 - Not verified: whether `mcp_servers_change` fires on connection loss, and the exact `ctx.ui.setWidget` signature.
+- Agent tool (tickets 09-11) retracts the v1 out-of-scope line: the model can query check state and re-run them through a minimal one-line result, with per-check output only on request.
 - Verified live (tmux + term-image, 2026-10-17): `ctx.ui.setWidget` takes `string[]`, and the surface/colour/command behaviour matches. Also verified that `pi.exec` resolves `{ code: 1, killed: false }` for a missing binary — identical to `exit 1` — so the `error` state is only reachable from a rejecting executor; a missing command shows `failed`. Documented as a known limit.
