@@ -14,7 +14,8 @@ vi.mock("@earendil-works/pi-coding-agent", () => ({
 	CONFIG_DIR_NAME: ".pi",
 }));
 
-import register from "./index.js";
+import { formatAudit } from "./command.js";
+import register, { COMMAND_NAME } from "./index.js";
 import type { ResolvedPackage } from "./resolve.js";
 import { DEFAULT_SECTION_BYTE_CAP, formatExtensionsSection } from "./section.js";
 
@@ -78,6 +79,7 @@ describe("registration", () => {
 		expect(captured.tools.size).toBe(0);
 		expect(captured.events.get("session_start")).toHaveLength(1);
 		expect(captured.events.get("before_agent_start")).toHaveLength(1);
+		expect(captured.commands.has(COMMAND_NAME)).toBe(true);
 	});
 });
 
@@ -284,5 +286,79 @@ describe("byte cap", () => {
 		expect(section).toContain("Truncated");
 		expect(section).toContain("p0");
 		expect(section).toContain("p49");
+	});
+
+	it("bounds the /self-help audit by a byte cap", () => {
+		const packages = Array.from({ length: 50 }, (_, index) => fakePackage(index));
+		const text = formatAudit(packages, 120);
+		expect(Buffer.byteLength(text, "utf8")).toBeLessThanOrEqual(120);
+	});
+});
+
+async function runCommand(
+	getPackages: () => unknown,
+	args: string,
+	options: { hasUI?: boolean; cwd?: string } = {},
+): Promise<string | undefined> {
+	const { pi, captured } = createMockPi({ getSettings: () => ({ packages: getPackages() }) as never });
+	register(pi);
+	const ctx = createMockCtx({ hasUI: options.hasUI ?? true, cwd: options.cwd });
+	const notify = ctx.ui.notify as unknown as ReturnType<typeof vi.fn>;
+	await captured.commands.get(COMMAND_NAME)!.handler(args, ctx as never);
+	return notify.mock.calls.at(-1)?.[0] as string | undefined;
+}
+
+describe("command", () => {
+	it("lists every resolved package with scope, path, and documentation state", async () => {
+		const cwd = join(tmpdir(), `self-help-command-${process.pid}-${Date.now()}`);
+		created.push(cwd);
+		const projectRoot = makePackageAt(
+			join(cwd, ".pi", "npm", "node_modules"),
+			"@acme/both",
+			{},
+			{
+				"README.md": "# both",
+			},
+		);
+		makeInstalledPackage(getAgentDir(), "@acme/both", {}, { "README.md": "# user both" });
+		makeInstalledPackage(getAgentDir(), "@acme/nodocs", {});
+		const text = await runCommand(() => ["npm:@acme/both", "npm:@acme/nodocs"], "", { cwd });
+		expect(text).toContain("npm:@acme/both");
+		expect(text).toContain("project:");
+		expect(text).toContain("user:");
+		expect(text).toContain(join(projectRoot, "package.json"));
+		expect(text).toContain("undocumented");
+	});
+
+	it("reports one package's locations for an argument and no README content", async () => {
+		const root = makeInstalledPackage(getAgentDir(), "@acme/query", {}, { "README.md": "# secret body" });
+		const text = await runCommand(() => ["npm:@acme/query"], "@acme/query");
+		expect(text).toContain(join(root, "package.json"));
+		expect(text).toContain(join(root, "README.md"));
+		expect(text).not.toContain("secret body");
+	});
+
+	it("reports when nothing matches the argument", async () => {
+		const text = await runCommand(() => [], "@acme/missing");
+		expect(text).toContain("No installed extension matches");
+	});
+
+	it("re-resolves the current settings at invocation", async () => {
+		makeInstalledPackage(getAgentDir(), "@acme/late", {}, { "README.md": "# late" });
+		const state: { packages: unknown[] } = { packages: [] };
+		const { pi, captured } = createMockPi({ getSettings: () => ({ packages: state.packages }) as never });
+		register(pi);
+		const ctx = createMockCtx({ hasUI: true });
+		await captured.events.get("session_start")![0]({ type: "session_start", reason: "startup" }, ctx);
+		state.packages = ["npm:@acme/late"];
+		await captured.commands.get(COMMAND_NAME)!.handler("", ctx as never);
+		const notify = ctx.ui.notify as unknown as ReturnType<typeof vi.fn>;
+		expect(notify.mock.calls.at(-1)?.[0]).toContain("@acme/late");
+	});
+
+	it("degrades with hasUI false without throwing", async () => {
+		makeInstalledPackage(getAgentDir(), "@acme/hidden", {}, { "README.md": "# h" });
+		const text = await runCommand(() => ["npm:@acme/hidden"], "", { hasUI: false });
+		expect(text).toBeUndefined();
 	});
 });

@@ -10,9 +10,18 @@
  */
 
 import { CONFIG_DIR_NAME, type ExtensionAPI, getAgentDir } from "@earendil-works/pi-coding-agent";
+import { registerSelfHelpCommand } from "./command.js";
 import { type ResolvedPackage, resolvePackages } from "./resolve.js";
 import { formatExtensionsSection } from "./section.js";
 
+export {
+	COMMAND_NAME,
+	DEFAULT_COMMAND_BYTE_CAP,
+	formatAudit,
+	formatQuery,
+	matchPackages,
+	registerSelfHelpCommand,
+} from "./command.js";
 export type { PackageScope, ResolveContext, ResolvedPackage } from "./resolve.js";
 export { isSafeName, parseNpmSource, resolvePackages } from "./resolve.js";
 export { DEFAULT_SECTION_BYTE_CAP, formatExtensionsSection } from "./section.js";
@@ -45,4 +54,6 @@ export default function register(pi: ExtensionAPI): void {
 		if (!options?.sections) return;
 		options.sections.extensions = section;
 	});
+
+	registerSelfHelpCommand(pi, (ctx) => resolveFromSettings(pi, ctx.cwd));
 }

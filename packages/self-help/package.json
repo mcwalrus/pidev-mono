@@ -27,6 +27,7 @@
 		"index.ts",
 		"resolve.ts",
 		"section.ts",
+		"command.ts",
 		"README.md",
 		"CHANGELOG.md"
 	],
