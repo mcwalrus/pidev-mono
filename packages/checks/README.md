@@ -52,7 +52,7 @@ An invalid entry warns and is skipped, leaving the rest intact.
 | `passed` | Exited zero and was not killed. |
 | `failed` | Exited non-zero. |
 | `timed_out` | Killed by its timeout — a hang, not a failed assertion. |
-| `error` | The command could not start (rejected executor). |
+| `error` | The executor rejected (for example invalid spawn arguments). |
 
 The widget reads green only when at least one check ran and every result is
 `passed`. An empty config renders a neutral surface, not green.
@@ -82,6 +82,12 @@ record results silently, so RPC, JSON, and print sessions work unchanged.
 
 Each check kills only its own direct child, the same guarantee `pi.exec`
 provides — a check that daemonises children can orphan them.
+
+**Known limit.** `pi.exec` reports a command that cannot start (a missing
+binary) as `{ code: 1, killed: false }` with empty output — identical to a
+command that exited 1. There is no signal to tell them apart, so a missing
+command shows `failed`, not `error`. `error` is reserved for an executor that
+rejects (for example invalid spawn arguments).
 
 ## Testing
 

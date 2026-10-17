@@ -16,3 +16,8 @@ adheres to lockstep versioning across the pidev-mono workspace.
 - `/checks` command to inspect results and `/checks run` to re-run.
 - Distinct `passed`, `failed`, `timed_out`, and `error` states.
 - Cancellation of in-flight checks on `session_shutdown`; silent run with no UI.
+
+### Known limitations
+
+- `pi.exec` reports a missing command identically to a non-zero exit, so a
+  command that cannot start shows `failed`, not `error`.

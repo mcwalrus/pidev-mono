@@ -70,6 +70,8 @@ async function runOne(
 		if (result.killed) return { ...base, state: "timed_out" };
 		return { ...base, state: result.code === 0 ? "passed" : "failed" };
 	} catch (error) {
+		// `pi.exec` never rejects on a spawn failure (it resolves code 1), so this is
+		// only for an executor that itself rejects, e.g. invalid spawn arguments.
 		const finishedAt = Date.now();
 		return {
 			name: definition.name,
