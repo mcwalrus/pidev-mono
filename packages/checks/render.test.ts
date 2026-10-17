@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
 	aggregateOf,
 	changeNotice,
+	checkDetail,
+	checkSummary,
 	DEFAULT_TAIL_BYTES,
 	reportText,
 	reportType,
@@ -67,6 +69,28 @@ describe("tail", () => {
 		expect(Buffer.byteLength(bounded, "utf8")).toBeLessThanOrEqual(DEFAULT_TAIL_BYTES);
 		expect(bounded).not.toContain("\uFFFD");
 		expect(bounded.endsWith("€")).toBe(true);
+	});
+});
+
+describe("checkSummary", () => {
+	it("maps the run state to one line", () => {
+		expect(checkSummary(store([]))).toBe("none configured");
+		expect(checkSummary(store([result("a", "running")], true))).toBe("still running");
+		expect(checkSummary(store([result("a", "passed"), result("b", "passed")]))).toBe("all passed");
+		expect(checkSummary(store([result("a", "passed"), result("b", "failed")]))).toBe("1 of 2 passed: b failed");
+	});
+});
+
+describe("checkDetail", () => {
+	it("returns one check's exit code and bounded tail", () => {
+		const text = checkDetail(store([{ ...result("db", "failed"), code: 2, stderr: "boom" }]), "db");
+		expect(text).toContain("db  failed");
+		expect(text).toContain("exit 2");
+		expect(text).toContain("boom");
+	});
+
+	it("reports plainly when the named check does not exist", () => {
+		expect(checkDetail(store([result("db", "passed")]), "nope")).toBe('No check named "nope".');
 	});
 });
 

@@ -93,7 +93,7 @@ export function checkSummary(store: CheckStore): string {
 export function checkDetail(store: CheckStore, name: string): string {
 	const result = store.results.find((candidate) => candidate.name === name);
 	if (result === undefined) return `No check named "${name}".`;
-	const lines = [`${result.name}  ${result.state}  ${result.durationMs ?? "-"}ms  exit ${result.code ?? "-"}`];
+	const lines = [resultLine(result)];
 	const { stdout, stderr } = boundedStreams(result);
 	if (stdout) lines.push("stdout:", indent(stdout));
 	if (stderr) lines.push("stderr:", indent(stderr));
@@ -106,7 +106,7 @@ export function reportText(store: CheckStore): string {
 	if (store.results.length === 0) return "No checks configured.";
 	const lines = [headline(store) + lastRunSuffix(store)];
 	for (const result of store.results) {
-		lines.push(`${result.name}  ${result.state}  ${result.durationMs ?? "-"}ms  exit ${result.code ?? "-"}`);
+		lines.push(resultLine(result));
 	}
 	for (const result of store.results) {
 		const { stdout, stderr } = boundedStreams(result);
@@ -134,6 +134,10 @@ export function tail(text: string, maxLines = DEFAULT_TAIL_LINES, maxBytes = DEF
 	let start = buffer.length - maxBytes;
 	while (start < buffer.length && (buffer[start]! & 0xc0) === 0x80) start += 1;
 	return buffer.subarray(start).toString("utf8");
+}
+
+function resultLine(result: CheckResult): string {
+	return `${result.name}  ${result.state}  ${result.durationMs ?? "-"}ms  exit ${result.code ?? "-"}`;
 }
 
 function boundedStreams(result: CheckResult): { stdout: string; stderr: string } {
