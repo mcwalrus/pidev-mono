@@ -4,9 +4,6 @@ Monorepo for Pi extensions in the `@piex/*` family. Lockstep versions, one
 install, one publish pipeline. Targets the Pi Agent CLI
 (`@earendil-works/pi-coding-agent`).
 
-The framework and its conventions are extracted from `rpiv-mono`; see
-[`PATTERNS.md`](./PATTERNS.md) for the pattern catalogue and why each piece exists.
-
 ## Layout
 
 ```
@@ -28,7 +25,7 @@ piex-mono/
 ## Commands
 
 | Command | Description |
-|---|---|
+| --- | --- |
 | `npm install` | One install at root; workspace symlinks under `node_modules/` |
 | `npm run check` | Host-provided-dep guard → Biome (`--write --error-on-warnings`) → `tsc --noEmit` |
 | `npm run check:host-provided-deps` | No host-provided package in an install-time dep field; no unaliased `typebox` import |
