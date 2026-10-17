@@ -1,6 +1,6 @@
-# @piex/config
+# @pidev/config
 
-Shared JSON config I/O utilities for piex-mono sibling packages.
+Shared JSON config I/O utilities for pidev-mono sibling packages.
 
 **Not a Pi extension** — no `pi` field, no tool/command/hook registration. Opt-in
 library: siblings add it to their `dependencies` explicitly.

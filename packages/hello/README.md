@@ -1,6 +1,6 @@
-# @piex/hello
+# @pidev/hello
 
-Example Pi extension for piex-mono. It demonstrates the patterns a new sibling
+Example Pi extension for pidev-mono. It demonstrates the patterns a new sibling
 should copy:
 
 - **Tool registration** with a TypeBox parameter schema and LLM-facing
@@ -11,11 +11,11 @@ should copy:
   compaction. Both persistence shapes are handled: standalone `toolResult`
   messages and `custom` entries written by `pi.appendEntry`.
 - **A slash command** (`/notes`) reading the same module state.
-- **Shared config I/O** via `@piex/config`.
+- **Shared config I/O** via `@pidev/config`.
 
 ## Config
 
-Config lives at `~/.config/piex-hello/config.json` (honours `XDG_CONFIG_HOME`):
+Config lives at `~/.config/pidev-hello/config.json` (honours `XDG_CONFIG_HOME`):
 
 ```json
 {
@@ -28,7 +28,7 @@ Config lives at `~/.config/piex-hello/config.json` (honours `XDG_CONFIG_HOME`):
 
 ## Testing
 
-Co-located `*.test.ts` files use `@piex/test-utils`:
+Co-located `*.test.ts` files use `@pidev/test-utils`:
 
 - `hello.contract.test.ts` — tool shape via `assertToolContract`
 - `hello.register.test.ts` — registration, execute, and replay behavior

@@ -1,4 +1,4 @@
-import { assertToolContract, describeRegisteredTools } from "@piex/test-utils";
+import { assertToolContract, describeRegisteredTools } from "@pidev/test-utils";
 import { describe, it } from "vitest";
 import { registerNoteTool, TOOL_NAME } from "./hello.js";
 

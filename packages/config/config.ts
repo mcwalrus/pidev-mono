@@ -1,5 +1,5 @@
 /**
- * piex-config — shared config I/O utilities for piex-mono sibling packages.
+ * pidev-config — shared config I/O utilities for pidev-mono sibling packages.
  *
  * Provides JSON config load/save with crash-resistant defaults, path resolution,
  * guidance-field validation, env-var fallback, and TypeBox-driven schema validation.
@@ -39,7 +39,7 @@ function defaultConfigDir(): string {
 /**
  * Resolve the config directory honoring `XDG_CONFIG_HOME`.
  *
- * Boundary: `XDG_CONFIG_HOME` governs the piex-* sibling config layer only.
+ * Boundary: `XDG_CONFIG_HOME` governs the pidev-* sibling config layer only.
  * Pi-native paths (`~/.pi/…`, driven by `PI_CODING_AGENT_DIR`) are a separate,
  * orthogonal concern and are intentionally NOT unified here.
  *
@@ -73,11 +73,11 @@ function legacyConfigPath(name: string, file: string = "config.json"): string {
  * `<resolveConfigDir()>/<name>/<file>` — defaults to `~/.config/<name>/config.json`
  * when `XDG_CONFIG_HOME` is unset / empty / whitespace / relative.
  *
- * Boundary: `XDG_CONFIG_HOME` governs the piex-* sibling config layer only;
+ * Boundary: `XDG_CONFIG_HOME` governs the pidev-* sibling config layer only;
  * Pi-native paths (`~/.pi/…`, via `PI_CODING_AGENT_DIR`) are orthogonal and
  * not unified here.
  *
- * @param name — package directory name (e.g. "piex-hello")
+ * @param name — package directory name (e.g. "pidev-hello")
  * @param file — config filename (defaults to "config.json")
  * @returns absolute path to the config file
  */
@@ -110,7 +110,7 @@ export function loadJsonConfig<T>(path: string): T {
 		// with zero diagnostic surface — the user cannot tell "never saved" from
 		// "saved-but-unreadable." Warning is owner-only since the file lives in
 		// the user's HOME.
-		console.warn(`piex-config: invalid JSON at ${path}, using default ({}) — ${(err as Error).message}`);
+		console.warn(`pidev-config: invalid JSON at ${path}, using default ({}) — ${(err as Error).message}`);
 		return {} as T;
 	}
 }
@@ -126,7 +126,7 @@ export function loadJsonConfig<T>(path: string): T {
  *   or warns + `{}` if malformed).
  * - Both missing → `{}`.
  *
- * @param name — package directory name (e.g. "piex-hello")
+ * @param name — package directory name (e.g. "pidev-hello")
  * @param file — config filename (defaults to "config.json")
  */
 export function loadJsonConfigWithLegacyFallback<T>(name: string, file: string = "config.json"): T {
@@ -148,7 +148,7 @@ const CONFIG_FILE_MODE = 0o600;
  * Persist a config object as formatted JSON. Returns `true` on successful
  * mkdir+write, `false` on filesystem failure (disk full, EACCES, EROFS, …).
  *
- * Every current piex-* save call site is user-initiated and shows a
+ * Every current pidev-* save call site is user-initiated and shows a
  * "Saved …" notification — callers MUST guard the success notification on
  * the boolean return so a silent disk failure can't make the success message
  * lie on disk-full / EACCES.
@@ -187,7 +187,7 @@ export interface GuidanceFields {
 // TypeBox form of GuidanceFields. Mirrors the interface 1:1 — same fields,
 // same optionality. `additionalProperties: true` lets consumers compose
 // wrappers that may carry sibling-specific keys without those leaking back
-// into piex-config. The runtime invariants (string fields must be non-empty,
+// into pidev-config. The runtime invariants (string fields must be non-empty,
 // the array field must be non-empty and contain only non-empty strings) are
 // still enforced by `validateGuidanceFields`; the schema is a structural
 // type-narrowing aid for callers that bake guidance into a larger
@@ -205,8 +205,8 @@ export const GuidanceFieldsSchema = Type.Object(
  * Validate and extract guidance fields from an unknown value.
  *
  * Returns a clean `GuidanceFields` object with only valid entries.
- * Byte-identical logic previously in piex-hello, piex-ask,
- * piex-advisor, and piex-web-tools.
+ * Byte-identical logic previously in pidev-hello, pidev-ask,
+ * pidev-advisor, and pidev-web-tools.
  */
 export function validateGuidanceFields(fields: unknown): GuidanceFields {
 	if (!fields || typeof fields !== "object") return {};
@@ -238,7 +238,7 @@ export function validateGuidanceFields(fields: unknown): GuidanceFields {
  * Accepts EITHER separator on read:
  *   - "provider/modelId" — canonical form (emitted by modelKey and persisted
  *     by post-slash-canonical-migration consumers).
- *   - "provider:modelId" — legacy form (persisted by released piex-advisor
+ *   - "provider:modelId" — legacy form (persisted by released pidev-advisor
  *     1.16+ before the migration). Auto-rewritten on the next save by any
  *     consumer that re-serialises via modelKey.
  *

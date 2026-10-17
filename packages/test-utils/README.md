@@ -1,6 +1,6 @@
-# @piex/test-utils
+# @pidev/test-utils
 
-Internal, **private** test-fixture package for piex-mono. Never published.
+Internal, **private** test-fixture package for pidev-mono. Never published.
 
 ## What it provides
 
@@ -24,5 +24,5 @@ excluded from coverage and from the publish set (`"private": true`).
 ## Using it
 
 ```ts
-import { createMockPi, assertToolContract } from "@piex/test-utils";
+import { createMockPi, assertToolContract } from "@pidev/test-utils";
 ```

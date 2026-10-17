@@ -1,4 +1,4 @@
-import { verifyShipManifest } from "@piex/test-utils";
+import { verifyShipManifest } from "@pidev/test-utils";
 import { describe, expect, it } from "vitest";
 
 describe("publish manifest", () => {

@@ -1,7 +1,7 @@
 import type { SessionEntry } from "@earendil-works/pi-coding-agent";
 
 /** Custom-entry type used to persist a notes snapshot on the session branch. */
-export const STATE_ENTRY_TYPE = "piex-note-state";
+export const STATE_ENTRY_TYPE = "pidev-note-state";
 
 /** The persisted/replayed snapshot shape carried in the tool result `details`. */
 export interface NoteDetails {

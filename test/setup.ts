@@ -7,7 +7,7 @@ import { beforeEach } from "vitest";
 // cache `homedir()` at module-load, so this must happen first. Package imports
 // below are therefore dynamic (inside beforeEach) and NOT hoisted — static
 // `import` statements would run above this assignment and capture the real HOME.
-const TEST_HOME = mkdtempSync(join(tmpdir(), "piex-test-home-"));
+const TEST_HOME = mkdtempSync(join(tmpdir(), "pidev-test-home-"));
 process.env.HOME = TEST_HOME;
 process.env.USERPROFILE = TEST_HOME;
 delete process.env.XDG_CONFIG_HOME;

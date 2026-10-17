@@ -1,5 +1,5 @@
 import type { SessionEntry, ToolDefinition } from "@earendil-works/pi-coding-agent";
-import { createMockCtx, createMockPi, roundTripBranchState } from "@piex/test-utils";
+import { createMockCtx, createMockPi, roundTripBranchState } from "@pidev/test-utils";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import register, { __resetState, COMMAND_NAME, getNotes, replaceNotes, replayFromBranch, TOOL_NAME } from "./index.js";
 
@@ -55,7 +55,7 @@ describe("execute", () => {
 		const captured = setup();
 		const tool = captured.tools.get(TOOL_NAME)!;
 		await callTool(tool, { action: "add", text: "note" });
-		expect(captured.entries).toEqual([{ customType: "piex-note-state", data: { notes: ["note"] } }]);
+		expect(captured.entries).toEqual([{ customType: "pidev-note-state", data: { notes: ["note"] } }]);
 	});
 });
 

@@ -1,16 +1,16 @@
-# piex-mono
+# pidev-mono
 
-Monorepo for Pi CLI extensions in the `@piex/*` family. Lockstep versions, a
+Monorepo for Pi CLI extensions in the `@pidev/*` family. Lockstep versions, a
 single install, a single publish pipeline.
 
 # Architecture
 
 ```
-piex-mono/
+pidev-mono/
 ├── packages/
-│   ├── config/       — @piex/config: shared config I/O (NOT a Pi extension)
-│   ├── hello/        — @piex/hello: example extension (tool + command + replay)
-│   └── test-utils/   — @piex/test-utils: private shared fixtures (not published)
+│   ├── config/       — @pidev/config: shared config I/O (NOT a Pi extension)
+│   ├── hello/        — @pidev/hello: example extension (tool + command + replay)
+│   └── test-utils/   — @pidev/test-utils: private shared fixtures (not published)
 ├── test/setup.ts     — repo-wide Vitest setup (HOME stub + env hygiene + resets)
 ├── scripts/          — release pipeline + fail-fast repo guards
 ├── vitest.config.ts  — single runner; include: ['packages/*/**/*.test.ts']
@@ -48,7 +48,7 @@ runs `npm run coverage`.
 
 # Conventions
 
-- **Lockstep versions**; directory `packages/<feature>` ↔ npm `@piex/<feature>`.
+- **Lockstep versions**; directory `packages/<feature>` ↔ npm `@pidev/<feature>`.
 - **Host-provided packages** (`@earendil-works/pi-*`, `typebox`) are always
   `peerDependencies: "*"`, never `dependencies`; import only aliased specifiers.
 - **`files` arrays** list every shipped `.ts` + asset dir; a

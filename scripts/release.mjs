@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 /**
- * Release script for piex-mono
+ * Release script for pidev-mono
  *
  * Usage:
- *   node scripts/release.mjs <major|minor|patch>
- *   node scripts/release.mjs <x.y.z>
+ *   node scripts/release.mjs <major|minor|patch> [--push]
+ *   node scripts/release.mjs <x.y.z> [--push]
+ *
+ * By default the release stops after the local commits + tag. Pass --push to
+ * also push main + tag to origin.
  *
  * Before running:
  *   Draft [Unreleased] entries for every affected package's CHANGELOG.md.
@@ -20,7 +23,7 @@
  * 6. Publish to npm (npm publish -ws --access public)
  * 7. Reinstate [Unreleased] section in each CHANGELOG
  * 8. Commit the [Unreleased] reinstatement
- * 9. Push main + tag
+ * 9. Push main + tag (only with --push)
  */
 
 import { execSync } from "node:child_process";
@@ -28,6 +31,7 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const RELEASE_TARGET = process.argv[2];
+const PUSH = process.argv.includes("--push");
 const BUMP_TYPES = new Set(["major", "minor", "patch"]);
 const SEMVER_RE = /^\d+\.\d+\.\d+$/;
 
@@ -53,7 +57,7 @@ function run(cmd, options = {}) {
 // package shares this version, so any package may serve as the source; we pin
 // one explicitly so the pipeline has a single read point.
 function getVersion() {
-	const pkg = JSON.parse(readFileSync("packages/piex-config/package.json", "utf-8"));
+	const pkg = JSON.parse(readFileSync("packages/config/package.json", "utf-8"));
 	return pkg.version;
 }
 
@@ -164,7 +168,7 @@ function hasUnreleasedEntries() {
 }
 
 // Main
-console.log("\n=== piex-mono Release ===\n");
+console.log("\n=== pidev-mono Release ===\n");
 
 console.log("Reminder: draft [Unreleased] entries before releasing.");
 console.log("  Hand-edit each packages/<pkg>/CHANGELOG.md\n");
@@ -229,9 +233,15 @@ stageChangedFiles();
 run(`git commit -m "Add [Unreleased] section for next cycle"`);
 console.log();
 
-console.log("Pushing to remote...");
-run("git push origin main");
-run(`git push origin v${version}`);
-console.log();
+if (PUSH) {
+	console.log("Pushing to remote...");
+	run("git push origin main");
+	run(`git push origin v${version}`);
+	console.log();
+} else {
+	console.log("Skipping push. Push when ready, or re-run with --push:");
+	console.log(`  git push origin main && git push origin v${version}`);
+	console.log();
+}
 
 console.log(`=== Released v${version} ===`);

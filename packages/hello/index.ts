@@ -1,5 +1,5 @@
 /**
- * @piex/hello — example Pi extension. Registers the `note` tool, the `/notes`
+ * @pidev/hello — example Pi extension. Registers the `note` tool, the `/notes`
  * slash command, and rebuilds its state from the session branch on
  * `session_start` (so it survives `/reload` and conversation compaction).
  *

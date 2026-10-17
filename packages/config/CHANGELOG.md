@@ -2,6 +2,9 @@
 
 All notable changes to this package are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
-adheres to lockstep versioning across the piex-mono workspace.
+adheres to lockstep versioning across the pidev-mono workspace.
 
 ## [Unreleased]
+
+### Changed
+- Renamed project and npm scope from `piex` to `pidev`.

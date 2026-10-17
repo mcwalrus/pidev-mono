@@ -3,10 +3,10 @@ import {
 	type GuidanceFields,
 	loadJsonConfigWithLegacyFallback,
 	validateGuidanceFields,
-} from "@piex/config";
+} from "@pidev/config";
 
-/** Directory name under the XDG config root (`~/.config/piex-hello/config.json`). */
-export const CONFIG_NAME = "piex-hello";
+/** Directory name under the XDG config root (`~/.config/pidev-hello/config.json`). */
+export const CONFIG_NAME = "pidev-hello";
 
 export interface NoteConfig {
 	guidance?: GuidanceFields;

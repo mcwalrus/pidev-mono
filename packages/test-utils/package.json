@@ -1,11 +1,11 @@
 {
-	"name": "@piex/test-utils",
+	"name": "@pidev/test-utils",
 	"version": "0.1.0",
-	"description": "Internal test fixtures for piex-mono (not published)",
+	"description": "Internal test fixtures for pidev-mono (not published)",
 	"private": true,
 	"type": "module",
 	"license": "MIT",
-	"author": "piex",
+	"author": "pidev",
 	"publishConfig": {
 		"access": "restricted"
 	},
@@ -32,8 +32,6 @@
 	"peerDependencies": {
 		"@earendil-works/pi-ai": "*",
 		"@earendil-works/pi-coding-agent": "*",
-		"@earendil-works/pi-tui": "*",
-		"typebox": "*",
 		"vitest": "*"
 	}
 }

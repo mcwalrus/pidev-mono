@@ -1,19 +1,19 @@
 {
-	"name": "@piex/hello",
+	"name": "@pidev/hello",
 	"version": "0.1.0",
-	"description": "Pi extension. Example piex-mono sibling: a `note` tool + `/notes` command with details-based replay.",
+	"description": "Pi extension. Example pidev-mono sibling: a `note` tool + `/notes` command with details-based replay.",
 	"keywords": [
 		"pi-package",
 		"pi-extension",
-		"piex",
+		"pidev",
 		"example"
 	],
 	"type": "module",
 	"license": "MIT",
-	"author": "piex",
+	"author": "pidev",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/example/piex-mono.git",
+		"url": "git+https://github.com/mcwalrus/pidev-mono.git",
 		"directory": "packages/hello"
 	},
 	"publishConfig": {
@@ -36,11 +36,10 @@
 		]
 	},
 	"dependencies": {
-		"@piex/config": "^0.1.0"
+		"@pidev/config": "^0.1.0"
 	},
 	"peerDependencies": {
 		"@earendil-works/pi-coding-agent": "*",
-		"@earendil-works/pi-tui": "*",
 		"typebox": "*"
 	}
 }

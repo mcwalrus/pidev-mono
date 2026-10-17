@@ -32,7 +32,7 @@ function writeTmpConfig(path: string, data: unknown): void {
 
 afterEach(() => {
 	// Clean up test-specific config dirs — not the whole .config
-	const dirs = ["piex-test-load", "piex-test-save"];
+	const dirs = ["pidev-test-load", "pidev-test-save"];
 	for (const d of dirs) {
 		rmSync(join(TMP_BASE, d), { recursive: true, force: true });
 	}
@@ -44,18 +44,18 @@ afterEach(() => {
 
 describe("configPath", () => {
 	it("resolves to ~/.config/<name>/config.json by default", () => {
-		const result = configPath("piex-hello");
-		expect(result).toMatch(/\.config[/\\]piex-hello[/\\]config\.json$/);
+		const result = configPath("pidev-hello");
+		expect(result).toMatch(/\.config[/\\]pidev-hello[/\\]config\.json$/);
 	});
 
 	it("supports custom filename", () => {
-		const result = configPath("piex-advisor", "advisor.json");
-		expect(result).toMatch(/\.config[/\\]piex-advisor[/\\]advisor\.json$/);
+		const result = configPath("pidev-advisor", "advisor.json");
+		expect(result).toMatch(/\.config[/\\]pidev-advisor[/\\]advisor\.json$/);
 	});
 
 	it("supports voice.json", () => {
-		const result = configPath("piex-voice", "voice.json");
-		expect(result).toMatch(/\.config[/\\]piex-voice[/\\]voice\.json$/);
+		const result = configPath("pidev-voice", "voice.json");
+		expect(result).toMatch(/\.config[/\\]pidev-voice[/\\]voice\.json$/);
 	});
 });
 
@@ -73,49 +73,49 @@ describe("configPath — XDG_CONFIG_HOME", () => {
 
 	it("falls back to ~/.config when XDG_CONFIG_HOME is unset", () => {
 		delete process.env.XDG_CONFIG_HOME;
-		expect(configPath("piex-hello")).toBe(join(homedir(), ".config", "piex-hello", "config.json"));
+		expect(configPath("pidev-hello")).toBe(join(homedir(), ".config", "pidev-hello", "config.json"));
 	});
 
 	it("honors an absolute XDG_CONFIG_HOME", () => {
-		const xdg = join(tmpdir(), "piex-xdg-abs");
+		const xdg = join(tmpdir(), "pidev-xdg-abs");
 		process.env.XDG_CONFIG_HOME = xdg;
-		expect(configPath("piex-hello")).toBe(join(xdg, "piex-hello", "config.json"));
+		expect(configPath("pidev-hello")).toBe(join(xdg, "pidev-hello", "config.json"));
 	});
 
 	it('expands a "~/"-prefixed XDG_CONFIG_HOME', () => {
 		process.env.XDG_CONFIG_HOME = "~/xdg";
-		expect(configPath("piex-hello")).toBe(join(homedir(), "xdg", "piex-hello", "config.json"));
+		expect(configPath("pidev-hello")).toBe(join(homedir(), "xdg", "pidev-hello", "config.json"));
 	});
 
 	it('resolves a bare "~" XDG_CONFIG_HOME to homedir()', () => {
 		process.env.XDG_CONFIG_HOME = "~";
-		expect(configPath("piex-hello")).toBe(join(homedir(), "piex-hello", "config.json"));
+		expect(configPath("pidev-hello")).toBe(join(homedir(), "pidev-hello", "config.json"));
 	});
 
 	it('falls back to ~/.config when XDG_CONFIG_HOME is ""', () => {
 		process.env.XDG_CONFIG_HOME = "";
-		expect(configPath("piex-hello")).toBe(join(homedir(), ".config", "piex-hello", "config.json"));
+		expect(configPath("pidev-hello")).toBe(join(homedir(), ".config", "pidev-hello", "config.json"));
 	});
 
 	it("falls back to ~/.config when XDG_CONFIG_HOME is whitespace-only", () => {
 		process.env.XDG_CONFIG_HOME = "   ";
-		expect(configPath("piex-hello")).toBe(join(homedir(), ".config", "piex-hello", "config.json"));
+		expect(configPath("pidev-hello")).toBe(join(homedir(), ".config", "pidev-hello", "config.json"));
 	});
 
 	it("falls back to ~/.config when XDG_CONFIG_HOME is relative", () => {
 		process.env.XDG_CONFIG_HOME = "relative";
-		expect(configPath("piex-hello")).toBe(join(homedir(), ".config", "piex-hello", "config.json"));
+		expect(configPath("pidev-hello")).toBe(join(homedir(), ".config", "pidev-hello", "config.json"));
 	});
 
 	it('falls back to ~/.config for a "~user" XDG_CONFIG_HOME (only "~" and "~/" expand)', () => {
 		process.env.XDG_CONFIG_HOME = "~user/xdg";
-		expect(configPath("piex-hello")).toBe(join(homedir(), ".config", "piex-hello", "config.json"));
+		expect(configPath("pidev-hello")).toBe(join(homedir(), ".config", "pidev-hello", "config.json"));
 	});
 
 	it("honors a custom filename under a set XDG_CONFIG_HOME", () => {
-		const xdg = join(tmpdir(), "piex-xdg-custom");
+		const xdg = join(tmpdir(), "pidev-xdg-custom");
 		process.env.XDG_CONFIG_HOME = xdg;
-		expect(configPath("piex-advisor", "advisor.json")).toBe(join(xdg, "piex-advisor", "advisor.json"));
+		expect(configPath("pidev-advisor", "advisor.json")).toBe(join(xdg, "pidev-advisor", "advisor.json"));
 	});
 });
 
@@ -125,19 +125,19 @@ describe("configPath — XDG_CONFIG_HOME", () => {
 
 describe("loadJsonConfig", () => {
 	it("returns {} for missing file", () => {
-		const result = loadJsonConfig(tmpConfigPath("piex-test-load"));
+		const result = loadJsonConfig(tmpConfigPath("pidev-test-load"));
 		expect(result).toEqual({});
 	});
 
 	it("parses valid JSON object", () => {
-		const path = tmpConfigPath("piex-test-load");
+		const path = tmpConfigPath("pidev-test-load");
 		writeTmpConfig(path, { hello: "world", count: 42 });
 		const result = loadJsonConfig<Record<string, unknown>>(path);
 		expect(result).toEqual({ hello: "world", count: 42 });
 	});
 
 	it("returns {} for malformed JSON", () => {
-		const path = tmpConfigPath("piex-test-load");
+		const path = tmpConfigPath("pidev-test-load");
 		mkdirSync(dirname(path), { recursive: true });
 		writeFileSync(path, "not json", "utf-8");
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -147,7 +147,7 @@ describe("loadJsonConfig", () => {
 	});
 
 	it("warns on malformed JSON (diagnostic for silent-revert scenarios)", () => {
-		const path = tmpConfigPath("piex-test-load");
+		const path = tmpConfigPath("pidev-test-load");
 		mkdirSync(dirname(path), { recursive: true });
 		writeFileSync(path, "not json", "utf-8");
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -158,35 +158,35 @@ describe("loadJsonConfig", () => {
 	});
 
 	it("returns {} for null content", () => {
-		const path = tmpConfigPath("piex-test-load");
+		const path = tmpConfigPath("pidev-test-load");
 		writeTmpConfig(path, null);
 		const result = loadJsonConfig(path);
 		expect(result).toEqual({});
 	});
 
 	it("returns {} for string content", () => {
-		const path = tmpConfigPath("piex-test-load");
+		const path = tmpConfigPath("pidev-test-load");
 		writeTmpConfig(path, "hello");
 		const result = loadJsonConfig(path);
 		expect(result).toEqual({});
 	});
 
 	it("returns {} for number content", () => {
-		const path = tmpConfigPath("piex-test-load");
+		const path = tmpConfigPath("pidev-test-load");
 		writeTmpConfig(path, 42);
 		const result = loadJsonConfig(path);
 		expect(result).toEqual({});
 	});
 
 	it("returns {} for boolean content", () => {
-		const path = tmpConfigPath("piex-test-load");
+		const path = tmpConfigPath("pidev-test-load");
 		writeTmpConfig(path, true);
 		const result = loadJsonConfig(path);
 		expect(result).toEqual({});
 	});
 
 	it("returns {} for array content", () => {
-		const path = tmpConfigPath("piex-test-load");
+		const path = tmpConfigPath("pidev-test-load");
 		writeTmpConfig(path, [1, 2, 3]);
 		const result = loadJsonConfig(path);
 		expect(result).toEqual({});
@@ -199,9 +199,9 @@ describe("loadJsonConfig", () => {
 
 describe("loadJsonConfigWithLegacyFallback", () => {
 	const ORIG = process.env.XDG_CONFIG_HOME;
-	const xdgRoot = join(tmpdir(), "piex-xdg-fallback");
+	const xdgRoot = join(tmpdir(), "pidev-xdg-fallback");
 	const legacyRoot = join(homedir(), ".config");
-	const NAME = "piex-test-fb";
+	const NAME = "pidev-test-fb";
 
 	function xdgConfigPath(file = "config.json"): string {
 		return join(xdgRoot, NAME, file);
@@ -266,14 +266,14 @@ describe("loadJsonConfigWithLegacyFallback", () => {
 
 describe("saveJsonConfig", () => {
 	it("returns true on success and writes formatted JSON with trailing newline", () => {
-		const path = tmpConfigPath("piex-test-save");
+		const path = tmpConfigPath("pidev-test-save");
 		const ok = saveJsonConfig(path, { key: "value" });
 		expect(ok).toBe(true);
 		expect(readFileSync(path, "utf-8")).toBe('{\n  "key": "value"\n}\n');
 	});
 
 	it("creates parent directories recursively", () => {
-		const path = join(TMP_BASE, "piex-test-save", "nested", "config.json");
+		const path = join(TMP_BASE, "pidev-test-save", "nested", "config.json");
 		const ok = saveJsonConfig(path, { nested: true });
 		expect(ok).toBe(true);
 		expect(existsSync(path)).toBe(true);

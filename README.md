@@ -1,17 +1,17 @@
-# piex-mono
+# pidev-mono
 
-Monorepo for Pi extensions in the `@piex/*` family. Lockstep versions, one
+Monorepo for Pi extensions in the `@pidev/*` family. Lockstep versions, one
 install, one publish pipeline. Targets the Pi Agent CLI
 (`@earendil-works/pi-coding-agent`).
 
 ## Layout
 
 ```
-piex-mono/
+pidev-mono/
 ├── packages/
-│   ├── config/        — @piex/config: shared config I/O library (not an extension)
-│   ├── hello/         — @piex/hello: example extension (tool + command + replay)
-│   └── test-utils/    — @piex/test-utils: private shared test fixtures (not published)
+│   ├── config/        — @pidev/config: shared config I/O library (not an extension)
+│   ├── hello/         — @pidev/hello: example extension (tool + command + replay)
+│   └── test-utils/    — @pidev/test-utils: private shared test fixtures (not published)
 ├── test/setup.ts      — repo-wide Vitest setup (HOME stub, env hygiene, singleton resets)
 ├── scripts/           — release pipeline + repo guards (host-provided deps, file sizes)
 ├── vitest.config.ts   — single Vitest runner over `packages/*/**/*.test.ts`
@@ -40,7 +40,7 @@ restages formatter rewrites; `pre-push` runs the full coverage gate.
 ## Conventions
 
 - **Lockstep versions** — every `packages/*/package.json` shares one version,
-  enforced by `sync-versions.js`. Directory `packages/<feature>` ↔ npm `@piex/<feature>`.
+  enforced by `sync-versions.js`. Directory `packages/<feature>` ↔ npm `@pidev/<feature>`.
 - **Sibling deps as `peerDependencies: "*"`**; host-provided packages
   (`@earendil-works/pi-*`, `typebox`) are **never** `dependencies`.
 - **`pi` manifest field** — `pi.extensions: ["./index.ts"]` tells Pi which module
