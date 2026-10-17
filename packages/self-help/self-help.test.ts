@@ -1,4 +1,4 @@
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
@@ -105,6 +105,22 @@ describe("advertisement", () => {
 		makeInstalledPackage(getAgentDir(), "@acme/headless", {}, { "README.md": "# Headless" });
 		expect(await advertisedSection(["npm:@acme/headless"], { hasUI: false })).toContain("@acme/headless");
 	});
+
+	it("advertises object-form package sources", async () => {
+		makeInstalledPackage(getAgentDir(), "@acme/object", {}, { "README.md": "# o" });
+		const section = await advertisedSection([{ source: "npm:@acme/object", extensions: ["index.ts"] }]);
+		expect(section).toContain("<name>@acme/object</name>");
+	});
+
+	it("resolves bare, scoped, and version-pinned npm sources", async () => {
+		makeInstalledPackage(getAgentDir(), "plain", {}, { "README.md": "# a" });
+		makeInstalledPackage(getAgentDir(), "@scope/pkg", {}, { "README.md": "# b" });
+		makeInstalledPackage(getAgentDir(), "@scope/versioned", {}, { "README.md": "# c" });
+		const section = await advertisedSection(["npm:plain", "npm:@scope/pkg", "npm:@scope/versioned@1.2.3"]);
+		expect(section).toContain("<name>plain</name>");
+		expect(section).toContain("<name>@scope/pkg</name>");
+		expect(section).toContain("<name>@scope/versioned</name>");
+	});
 });
 
 describe("source safety", () => {
@@ -196,6 +212,63 @@ describe("scopes", () => {
 		expect(section!.match(/<name>@acme\/both<\/name>/g)).toHaveLength(2);
 		expect(section).toContain(`<location>${join(projectRoot, "package.json")}</location>`);
 		expect(section).toContain("<active>true</active>");
+	});
+});
+
+describe("confinement", () => {
+	it("refuses a symlinked README and reports the package undocumented", async () => {
+		const root = makeInstalledPackage(getAgentDir(), "@acme/linked", {});
+		const outside = join(tmpdir(), `self-help-outside-${process.pid}-${Date.now()}.md`);
+		writeFileSync(outside, "outside content");
+		created.push(outside);
+		symlinkSync(outside, join(root, "README.md"));
+		const section = await advertisedSection(["npm:@acme/linked"]);
+		expect(section).toContain("<undocumented>");
+		expect(section).not.toContain("<readme>");
+		expect(section).not.toContain("outside content");
+	});
+
+	it("refuses a documentation candidate that is not a regular file", async () => {
+		const root = makeInstalledPackage(getAgentDir(), "@acme/notafile", {});
+		mkdirSync(join(root, "README.md"), { recursive: true });
+		const section = await advertisedSection(["npm:@acme/notafile"]);
+		expect(section).toContain("<undocumented>");
+	});
+
+	it("omits git, URL, and local sources", async () => {
+		const section = await advertisedSection([
+			"git:github.com/acme/widget",
+			"https://example.com/widget.tgz",
+			"./local-pkg",
+			"file:/tmp/local",
+		]);
+		expect(section).toBeUndefined();
+	});
+
+	it("distinguishes an omitted non-npm source from an installed package without docs", async () => {
+		makeInstalledPackage(getAgentDir(), "@acme/nodocs", {});
+		const section = await advertisedSection(["git:github.com/acme/widget", "npm:@acme/nodocs"]);
+		expect(section).toContain("@acme/nodocs");
+		expect(section).toContain("<undocumented>");
+		expect(section).not.toContain("github.com");
+	});
+
+	it("ignores a malformed or absent packages value without throwing", async () => {
+		for (const value of ["nonsense", 42, null, [null, 7, {}, { source: 5 }]]) {
+			expect(await advertisedSection(value)).toBeUndefined();
+		}
+	});
+
+	it("survives getSettings throwing", async () => {
+		const { pi, captured } = createMockPi({
+			getSettings: () => {
+				throw new Error("boom");
+			},
+		} as never);
+		register(pi);
+		expect(() =>
+			captured.events.get("session_start")![0]({ type: "session_start", reason: "startup" }, createMockCtx()),
+		).not.toThrow();
 	});
 });
 
