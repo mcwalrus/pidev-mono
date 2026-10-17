@@ -8,6 +8,9 @@ packages/*/node_modules
 *.cpuprofile
 
 .pi/
+.agents/
+.claude/
+skills-lock.json
 
 # Local-only pipeline artifacts (guidance/ is intentionally tracked — hand-curated
 # AI-assistant context, not run state).
