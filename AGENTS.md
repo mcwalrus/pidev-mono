@@ -29,13 +29,17 @@ A monorepo for Pi Agent CLI extensions for @earendil-works/pi-coding-agent.
 
 First, call: `read docs docs/extensions.md`
 
-* No issue-tracker is used, refer to markdown and update tickboxes as you go.
-* Tasks are tracked under `tasks/<package>/...` where a git init should be set under each.
-* Use commits to track changes only when checkboxes are updated (user to commit spec)
-* You can refer to source code at `$HOME/repos/github.com/earendil-works/pi`
-* Multiple agents maybe working on the repo so avoid branches
+- No issue-tracker is used, refer to markdown and update tickboxes as you go
+- Tasks are tracked under `tasks/<package>/tickets` where git init should be set within
+- Use commits to track changes only when checkboxes are updated (user to commit spec)
+- You can refer to source code at `$HOME/repos/github.com/earendil-works/pi`
+- Multiple agents maybe working on the repo so avoid branches
 
 Pull the latest version from the repo prior.
+
+## Specs
+
+When generating user stories consider both the *'PI user'* but also the *'PI agent'*. The needs for the two are very different. The user will value the ergonomics, usability and visibility of what extensions are used for. Agent needs are likely to be your own, as given by the use-case.
 
 ## Packages
 
@@ -46,19 +50,3 @@ List of local packages helpful for local development:
 Agent-first terminal capture a tmux pane in a PNG out which ships a CLI. This package should help for interactive development of pi.dev extension-based changes. pi.dev development can validate the TUI experience via the `VirtualTerminal` backend which uses `@xterm/headless` to provide a cell-grid emulator, but only for development directly on the pi.dev harness itself.
 
 Use this after changes to TUI based-extension updates and report feedback on improvements.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -14,7 +14,10 @@ packages/*/node_modules
 skills-lock.json
 
 # Personal Workflow
-tasks/
+tasks/**
+!tasks/**/
+!tasks/**/spec.md
+tasks/**/tickets/
 
 # Environment
 .env
