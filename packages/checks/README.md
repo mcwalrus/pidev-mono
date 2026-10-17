@@ -54,8 +54,12 @@ An invalid entry warns and is skipped, leaving the rest intact.
 | `timed_out` | Killed by its timeout — a hang, not a failed assertion. |
 | `error` | The executor rejected (for example invalid spawn arguments). |
 
-The widget reads green only when at least one check ran and every result is
-`passed`. An empty config renders a neutral surface, not green.
+Colour contract: the widget and footer read **muted** while a run is in flight
+(any result `pending` or `running`) and for an empty config; **green** only when
+at least one check ran and every result is `passed`; **red** when any settled
+result is `failed`, `timed_out`, or `error`. Startup therefore never flashes a
+warning before a result exists. Once settled, the widget adds a bounded line
+naming the checks that need attention.
 
 ## The `/checks` command
 

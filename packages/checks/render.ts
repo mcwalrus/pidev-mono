@@ -7,10 +7,20 @@ export interface Foreground {
 export type Aggregate = "all-passed" | "attention" | "neutral";
 
 const identityForeground: Foreground = { fg: (_color, text) => text };
+const MAX_ATTENTION_NAMES = 5;
 
-/** Green only when at least one check ran and every result passed; empty config is neutral. */
+/** Serialised tail limits shared by `/checks` stdout and stderr. */
+export const DEFAULT_TAIL_LINES = 20;
+export const DEFAULT_TAIL_BYTES = 4096;
+
+/**
+ * Neutral until a run settles: green only when at least one check ran and every
+ * result passed; otherwise red for a settled non-passed result. Pending or
+ * running results keep the aggregate neutral so startup never flashes a warning.
+ */
 export function aggregateOf(results: readonly CheckResult[]): Aggregate {
 	if (results.length === 0) return "neutral";
+	if (results.some((result) => result.state === "pending" || result.state === "running")) return "neutral";
 	return results.every((result) => result.state === "passed") ? "all-passed" : "attention";
 }
 
@@ -18,6 +28,10 @@ export function aggregateOf(results: readonly CheckResult[]): Aggregate {
 export function widgetLines(store: CheckStore, foreground: Foreground = identityForeground): string[] {
 	if (store.results.length === 0) return [foreground.fg("muted", "No checks configured")];
 	const lines = [foreground.fg(aggregateColour(store), headline(store) + lastRunSuffix(store))];
+	if (!store.running) {
+		const attention = store.results.filter((result) => result.state !== "passed").map((result) => result.name);
+		if (attention.length > 0) lines.push(foreground.fg("error", `Needs attention: ${boundedNames(attention)}`));
+	}
 	lines.push(foreground.fg("muted", "Run /checks to inspect"));
 	return lines;
 }
@@ -46,11 +60,18 @@ export function reportText(store: CheckStore): string {
 	return lines.join("\n");
 }
 
-/** Keep the last `maxLines` lines, dropping a single trailing newline first. */
-export function tail(text: string, maxLines = 20): string {
+/** Keep the last `maxLines` lines, then the last `maxBytes` UTF-8 bytes. */
+export function tail(text: string, maxLines = DEFAULT_TAIL_LINES, maxBytes = DEFAULT_TAIL_BYTES): string {
 	if (text === "") return "";
 	const lines = text.replace(/\r\n/g, "\n").replace(/\n$/, "").split("\n");
-	return lines.slice(-maxLines).join("\n");
+	const bounded = lines.slice(-maxLines).join("\n");
+	if (Buffer.byteLength(bounded, "utf8") <= maxBytes) return bounded;
+	return Buffer.from(bounded, "utf8").subarray(-maxBytes).toString("utf8");
+}
+
+function boundedNames(names: readonly string[]): string {
+	if (names.length <= MAX_ATTENTION_NAMES) return names.join(", ");
+	return `${names.slice(0, MAX_ATTENTION_NAMES).join(", ")} +${names.length - MAX_ATTENTION_NAMES} more`;
 }
 
 function headline(store: CheckStore): string {
@@ -63,7 +84,10 @@ function passedCount(store: CheckStore): number {
 }
 
 function aggregateColour(store: CheckStore): string {
-	return aggregateOf(store.results) === "all-passed" ? "success" : "warning";
+	const aggregate = aggregateOf(store.results);
+	if (aggregate === "all-passed") return "success";
+	if (aggregate === "attention") return "error";
+	return "muted";
 }
 
 function lastRunSuffix(store: CheckStore): string {

@@ -54,6 +54,7 @@ describe("parseChecksConfig", () => {
 	});
 
 	it("preserves declaration order and duplicate names", () => {
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 		const result = parseChecksConfig({
 			checks: [
 				{ name: "dup", command: "true" },
@@ -61,6 +62,22 @@ describe("parseChecksConfig", () => {
 			],
 		});
 		expect(result.map((entry) => entry.command)).toEqual(["true", "false"]);
+		expect(warn).toHaveBeenCalledOnce();
+		expect(warn).toHaveBeenCalledWith('pidev-checks: duplicate check name "dup"');
+	});
+
+	it("warns once per duplicated name regardless of copies", () => {
+		const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+		const result = parseChecksConfig({
+			checks: [
+				{ name: "dup", command: "a" },
+				{ name: "dup", command: "b" },
+				{ name: "dup", command: "c" },
+				{ name: "solo", command: "d" },
+			],
+		});
+		expect(result.map((entry) => entry.command)).toEqual(["a", "b", "c", "d"]);
+		expect(warn).toHaveBeenCalledOnce();
 	});
 });
 

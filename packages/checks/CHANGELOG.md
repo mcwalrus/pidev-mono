@@ -16,6 +16,14 @@ adheres to lockstep versioning across the pidev-mono workspace.
 - `/checks` command to inspect results and `/checks run` to re-run.
 - Distinct `passed`, `failed`, `timed_out`, and `error` states.
 - Cancellation of in-flight checks on `session_shutdown`; silent run with no UI.
+- Duplicate check names warn once; both entries still run in config order.
+
+### Changed
+
+- The aggregate and footer are neutral while a run is in flight, green only once
+  a settled run has every check passed, red for any settled failure.
+- The widget names the checks needing attention once a run settles.
+- `/checks` output is bounded by bytes per stream as well as lines.
 
 ### Known limitations
 

@@ -42,6 +42,8 @@ export function parseChecksConfig(raw: unknown): CheckDefinition[] {
 		return [];
 	}
 	const definitions: CheckDefinition[] = [];
+	const seen = new Set<string>();
+	const warned = new Set<string>();
 	checks.forEach((entry, index) => {
 		if (!Value.Check(CheckEntrySchema, entry)) {
 			const first = [...Value.Errors(CheckEntrySchema, entry)][0];
@@ -49,7 +51,13 @@ export function parseChecksConfig(raw: unknown): CheckDefinition[] {
 			console.warn(`pidev-checks: skipping invalid check at index ${index}${where}`);
 			return;
 		}
-		definitions.push(Value.Clean(CheckEntrySchema, Value.Clone(entry)) as CheckDefinition);
+		const definition = Value.Clean(CheckEntrySchema, Value.Clone(entry)) as CheckDefinition;
+		if (seen.has(definition.name) && !warned.has(definition.name)) {
+			console.warn(`pidev-checks: duplicate check name "${definition.name}"`);
+			warned.add(definition.name);
+		}
+		seen.add(definition.name);
+		definitions.push(definition);
 	});
 	return definitions;
 }

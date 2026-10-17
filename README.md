@@ -10,6 +10,7 @@ install, one publish pipeline. Targets the Pi Agent CLI
 pidev-mono/
 ├── packages/
 │   ├── config/        — @pidev/config: shared config I/O library (not an extension)
+│   ├── checks/        — @pidev/checks: environment precondition checks beside the editor
 │   ├── hello/         — @pidev/hello: example extension (tool + command + replay)
 │   └── test-utils/    — @pidev/test-utils: private shared test fixtures (not published)
 ├── test/setup.ts      — repo-wide Vitest setup (HOME stub, env hygiene, singleton resets)
