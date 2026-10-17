@@ -8,3 +8,16 @@ updates:
       github-actions:
         patterns:
           - '*'
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      # Minor + patch together in one PR; majors arrive individually.
+      npm-minor-patch:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch

@@ -1,6 +1,7 @@
 # No trailing slash: also matches a stray node_modules SYMLINK.
 node_modules
 packages/*/node_modules
+.obsidian/
 
 *.log
 .DS_Store

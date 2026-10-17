@@ -23,6 +23,14 @@ check-decision-codes:
 check-file-sizes:
     npm run check:file-sizes
 
+# Audit dependencies for known vulnerabilities. Fails on high + critical, as CI does.
+# Also reports the pi extension tree under .pi/npm, which is gitignored and so
+# invisible to Dependabot.
+[group('check')]
+audit:
+    npm run audit
+    @if [ -f .pi/npm/package-lock.json ]; then echo; echo '--- pi extensions (.pi/npm) - informational, pi-managed tree ---'; (cd .pi/npm && npm audit --audit-level=high) || true; fi
+
 # Run the test suite
 [group('test')]
 test:
@@ -35,7 +43,7 @@ coverage:
 
 # Everything CI runs, in order. Run before pushing.
 [group('test')]
-ci: install check-decision-codes check-file-sizes check
+ci: install check-decision-codes check-file-sizes check audit
     npm run coverage -- --reporter=default --reporter=json --outputFile=test-results.json
 
 # Cut a release locally: just release patch|minor|major
