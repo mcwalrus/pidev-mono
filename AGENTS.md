@@ -26,21 +26,27 @@ A monorepo for Pi Agent CLI extensions for @earendil-works/pi-coding-agent.
 * Consider elegance and usability of how models see tool-calls
 ## Tools
 
-- Recipes - npm + justfile
+- npm + justfile
 - CI - GitHub workflows
 - Releases - never push unless told
 
 ## Workflow
 
-First, call: `read docs docs/extensions.md`
+**First, always call** 
 
+* `read README.md`
+* `read docs docs/extensions.md`
+
+**Workflow guidelines**
+
+- Stay on the `main` branch, avoid branching off.
 - No issue-tracker is used, refer to markdown and update tickboxes as you go
 - Tasks are tracked under `tasks/<package>/tickets` where git init should be set within
 - Use commits to track changes only when checkboxes are updated (user to commit spec)
 - You can refer to source code at `$HOME/repos/github.com/earendil-works/pi`
-- Multiple agents maybe working on the repo so avoid branches
+- Multiple agents maybe working on the repo at one time
 
-Pull the latest version from the repo prior.
+Pull the latest version of `earendil-works/pi`
 
 ## Specs
 
