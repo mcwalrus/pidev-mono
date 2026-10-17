@@ -11,14 +11,14 @@
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { type CheckDefinition, loadChecksConfig } from "./config.js";
-import { reportText, statusText, widgetLines } from "./render.js";
+import { reportText, reportType, statusText, widgetLines } from "./render.js";
 import { type CheckExecutor, runChecks } from "./runner.js";
 import { type CheckResult, createCheckStore, seedResults } from "./state/store.js";
 
 export type { CheckDefinition } from "./config.js";
 export { CONFIG_NAME, DEFAULT_TIMEOUT_MS, loadChecksConfig, PROJECT_CONFIG_FILE, parseChecksConfig } from "./config.js";
 export type { Aggregate, Foreground } from "./render.js";
-export { aggregateOf, reportText, statusText, tail, widgetLines } from "./render.js";
+export { aggregateOf, reportText, reportType, statusText, tail, widgetLines } from "./render.js";
 export type { CheckExecutor, RunChecksOptions } from "./runner.js";
 export { DEFAULT_CONCURRENCY, runChecks } from "./runner.js";
 export type { CheckResult, CheckState, CheckStore } from "./state/store.js";
@@ -92,14 +92,14 @@ export default function register(pi: ExtensionAPI): void {
 			const argument = args.trim();
 			if (argument === "run") {
 				await run(ctx, loadChecksConfig(ctx.cwd));
-				ctx.ui.notify(reportText(store), "info");
+				ctx.ui.notify(reportText(store), reportType(store));
 				return;
 			}
 			if (argument !== "") {
 				ctx.ui.notify("Usage: /checks [run]", "info");
 				return;
 			}
-			ctx.ui.notify(reportText(store), "info");
+			ctx.ui.notify(reportText(store), reportType(store));
 		},
 	});
 }

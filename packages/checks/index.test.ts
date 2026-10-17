@@ -108,6 +108,23 @@ describe("session start", () => {
 		expect(report).toContain("missing  error");
 	});
 
+	it("raises the /checks report as an error when a check fails", async () => {
+		saveJsonConfig(configPath(CONFIG_NAME), { checks: [{ name: "db", command: "db" }] });
+		const exec = vi.fn(async () => ({ stdout: "", stderr: "", code: 1, killed: false }));
+		const { pi, captured } = createMockPi({ exec });
+		register(pi);
+		const ctx = createMockCtx({ hasUI: true, ui: { theme: makeTheme() } });
+
+		await startSession(captured, ctx);
+		await vi.waitFor(() => expect(exec).toHaveBeenCalledTimes(1));
+		await captured.commands.get(COMMAND_NAME)!.handler("", ctx as never);
+
+		expect((ctx.ui.notify as ReturnType<typeof vi.fn>).mock.calls.at(-1)).toEqual([
+			expect.stringContaining("db  failed"),
+			"error",
+		]);
+	});
+
 	it("re-runs every check on /checks run and refreshes the surfaces", async () => {
 		saveJsonConfig(configPath(CONFIG_NAME), { checks: [{ name: "postgres", command: "pg_isready" }] });
 		let code = 0;

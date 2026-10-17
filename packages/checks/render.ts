@@ -47,17 +47,23 @@ export function reportText(store: CheckStore): string {
 	if (store.results.length === 0) return "No checks configured.";
 	const lines = [headline(store) + lastRunSuffix(store)];
 	for (const result of store.results) {
-		lines.push(`${result.name}  ${result.state}  ${result.durationMs ?? "-"}ms`);
+		lines.push(`${result.name}  ${result.state}  ${result.durationMs ?? "-"}ms  exit ${result.code ?? "-"}`);
 	}
 	for (const result of store.results) {
 		const stdout = tail(result.stdout);
 		const stderr = tail(result.stderr);
-		if (!stdout && !stderr) continue;
+		if (!stdout && !stderr && result.state === "passed") continue;
 		lines.push("", `${result.name} (${result.state})`);
 		if (stdout) lines.push("stdout:", indent(stdout));
 		if (stderr) lines.push("stderr:", indent(stderr));
+		if (!stdout && !stderr) lines.push(`no output captured (exit ${result.code ?? "-"})`);
 	}
 	return lines.join("\n");
+}
+
+/** Notification severity for the `/checks` report: red when any settled check needs attention. */
+export function reportType(store: CheckStore): "info" | "error" {
+	return aggregateOf(store.results) === "attention" ? "error" : "info";
 }
 
 /** Keep the last `maxLines` lines, then the last `maxBytes` UTF-8 bytes. */

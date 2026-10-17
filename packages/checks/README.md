@@ -69,8 +69,11 @@ naming the checks that need attention.
 
 ## The `/checks` command
 
-- `/checks` prints each check's name, state, and duration, the last-run time,
-  and a bounded tail of any captured stdout/stderr.
+- `/checks` prints each check's name, state, duration, and exit code, the
+  last-run time, and a bounded tail of any captured stdout/stderr. A non-passed
+  check with no output still reports `no output captured (exit N)`, so a silent
+  failure is diagnosable. The report is raised as an error when any check needs
+  attention, and as info otherwise.
 - `/checks run` re-runs every check, refreshes the surfaces, then prints.
 - Any other argument prints usage and runs nothing.
 

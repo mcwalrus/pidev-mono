@@ -1,6 +1,6 @@
 import { makeTheme } from "@pidev/test-utils";
 import { describe, expect, it } from "vitest";
-import { aggregateOf, DEFAULT_TAIL_BYTES, tail, widgetLines } from "./render.js";
+import { aggregateOf, DEFAULT_TAIL_BYTES, reportText, reportType, tail, widgetLines } from "./render.js";
 import type { CheckResult, CheckState, CheckStore } from "./state/store.js";
 
 function result(name: string, state: CheckState): CheckResult {
@@ -48,6 +48,42 @@ describe("tail", () => {
 	it("stays within the byte bound for multi-byte output", () => {
 		const line = "é".repeat(DEFAULT_TAIL_BYTES);
 		expect(Buffer.byteLength(tail(line), "utf8")).toBeLessThanOrEqual(DEFAULT_TAIL_BYTES);
+	});
+});
+
+describe("reportText", () => {
+	it("shows the exit code and a no-output note for a silent failure", () => {
+		const text = reportText(store([{ ...result("jaeger", "failed"), code: 7, durationMs: 18 }], false, 1));
+
+		expect(text).toContain("jaeger  failed  18ms  exit 7");
+		expect(text).toContain("no output captured (exit 7)");
+	});
+
+	it("includes the captured stderr tail for a failing check", () => {
+		const text = reportText(store([{ ...result("db", "failed"), code: 2, stderr: "boom" }], false, 1));
+
+		expect(text).toContain("db (failed)");
+		expect(text).toContain("stderr:");
+		expect(text).toContain("boom");
+	});
+
+	it("omits the diagnostic block for a passed check with no output", () => {
+		const text = reportText(store([{ ...result("db", "passed"), code: 0 }], false, 1));
+
+		expect(text).toContain("db  passed");
+		expect(text).not.toContain("db (passed)");
+	});
+});
+
+describe("reportType", () => {
+	it("is error when any settled check needs attention", () => {
+		expect(reportType(store([result("a", "failed")]))).toBe("error");
+		expect(reportType(store([result("a", "timed_out")]))).toBe("error");
+	});
+
+	it("is info while neutral or all-passed", () => {
+		expect(reportType(store([result("a", "passed")]))).toBe("info");
+		expect(reportType(store([result("a", "running")]))).toBe("info");
 	});
 });
 
