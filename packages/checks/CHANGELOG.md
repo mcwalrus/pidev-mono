@@ -17,6 +17,8 @@ adheres to lockstep versioning across the pidev-mono workspace.
 - Distinct `passed`, `failed`, `timed_out`, and `error` states.
 - Cancellation of in-flight checks on `session_shutdown`; silent run with no UI.
 - Duplicate check names warn once; both entries still run in config order.
+- A model-callable `checks` tool reports a one-line readiness summary, with
+  `action: "run"` to re-run and `name` for one check's exit code and output tail.
 
 ### Changed
 

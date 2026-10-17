@@ -74,7 +74,7 @@ describe("session start", () => {
 		expect(captured.events.get("session_start")).toHaveLength(1);
 		const widget = (ctx.ui.setWidget as ReturnType<typeof vi.fn>).mock.calls.at(-1)?.[1] as string[];
 		expect(widget.join("\n")).toContain("No checks");
-		expect(captured.tools.size).toBe(0);
+		expect(captured.tools.size).toBe(1);
 		warn.mockRestore();
 	});
 

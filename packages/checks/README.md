@@ -81,6 +81,16 @@ naming the checks that need attention.
 No background timer or periodic re-run; results refresh only on session start
 and on `/checks`.
 
+## The `checks` tool
+
+The model can ask whether the environment is ready without loading raw logs. A
+call with no arguments returns one minimal line: `all passed`, `N of M passed`
+with each non-passed check's name and state, `still running`, or
+`none configured`. Passing `name` returns only that check's exit code and a
+bounded output tail; passing `action: "run"` re-runs every check first and
+returns the new summary. Captured stdout and stderr otherwise stay human-only
+on `/checks`.
+
 ## Model notice
 
 When a `/checks` rerun changes any check's state, the next model prompt carries

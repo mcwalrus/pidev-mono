@@ -28,6 +28,7 @@
 		"config.ts",
 		"runner.ts",
 		"render.ts",
+		"tool.ts",
 		"state/store.ts",
 		"README.md",
 		"CHANGELOG.md"

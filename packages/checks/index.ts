@@ -16,6 +16,7 @@ import { type CheckDefinition, loadChecksConfig } from "./config.js";
 import { changeNotice, reportText, reportType, statusText, widgetLines } from "./render.js";
 import { type CheckExecutor, runChecks } from "./runner.js";
 import { type CheckResult, createCheckStore, seedResults } from "./state/store.js";
+import { registerChecksTool } from "./tool.js";
 
 export type { CheckDefinition } from "./config.js";
 export { CONFIG_NAME, DEFAULT_TIMEOUT_MS, loadChecksConfig, PROJECT_CONFIG_FILE, parseChecksConfig } from "./config.js";
@@ -34,6 +35,8 @@ export type { CheckExecutor, RunChecksOptions } from "./runner.js";
 export { DEFAULT_CONCURRENCY, runChecks } from "./runner.js";
 export type { CheckResult, CheckState, CheckStore } from "./state/store.js";
 export { createCheckStore, seedResults } from "./state/store.js";
+export type { ChecksToolParams } from "./tool.js";
+export { ChecksParams, TOOL_NAME } from "./tool.js";
 
 export const COMMAND_NAME = "checks";
 export const WIDGET_KEY = "pidev-checks";
@@ -87,6 +90,8 @@ export default function register(pi: ExtensionAPI): void {
 	pi.on("session_start", (_event, ctx) => {
 		void run(ctx, loadChecksConfig(ctx.cwd));
 	});
+
+	registerChecksTool(pi, { store, run: (ctx) => run(ctx, loadChecksConfig(ctx.cwd)) });
 
 	pi.on("before_agent_start", () => {
 		if (pendingNotice === undefined) return undefined;

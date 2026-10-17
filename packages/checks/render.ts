@@ -74,6 +74,33 @@ export function statusText(store: CheckStore, foreground: Foreground = identityF
 	return foreground.fg(aggregateColour(store), `checks ${passedCount(store)}/${store.results.length}`);
 }
 
+/** One-line model-facing summary of the current session results. Never includes captured output. */
+export function checkSummary(store: CheckStore): string {
+	if (store.results.length === 0) return "none configured";
+	if (store.running || store.results.some((result) => result.state === "pending" || result.state === "running")) {
+		return "still running";
+	}
+	const passed = passedCount(store);
+	if (passed === store.results.length) return "all passed";
+	const attention = store.results
+		.filter((result) => result.state !== "passed")
+		.map((result) => `${result.name} ${result.state}`)
+		.join(", ");
+	return `${passed} of ${store.results.length} passed: ${attention}`;
+}
+
+/** One check's exit code and bounded output tail, for a model that names a check. */
+export function checkDetail(store: CheckStore, name: string): string {
+	const result = store.results.find((candidate) => candidate.name === name);
+	if (result === undefined) return `No check named "${name}".`;
+	const lines = [`${result.name}  ${result.state}  ${result.durationMs ?? "-"}ms  exit ${result.code ?? "-"}`];
+	const { stdout, stderr } = boundedStreams(result);
+	if (stdout) lines.push("stdout:", indent(stdout));
+	if (stderr) lines.push("stderr:", indent(stderr));
+	if (!stdout && !stderr && result.state !== "passed") lines.push(`no output captured (exit ${result.code ?? "-"})`);
+	return lines.join("\n");
+}
+
 /** Full command output: one line per check, plus a bounded stdout/stderr tail for anything that wrote. */
 export function reportText(store: CheckStore): string {
 	if (store.results.length === 0) return "No checks configured.";
@@ -82,8 +109,7 @@ export function reportText(store: CheckStore): string {
 		lines.push(`${result.name}  ${result.state}  ${result.durationMs ?? "-"}ms  exit ${result.code ?? "-"}`);
 	}
 	for (const result of store.results) {
-		const stdout = tail(result.stdout);
-		const stderr = tail(result.stderr);
+		const { stdout, stderr } = boundedStreams(result);
 		if (!stdout && !stderr && result.state === "passed") continue;
 		lines.push("", `${result.name} (${result.state})`);
 		if (stdout) lines.push("stdout:", indent(stdout));
@@ -98,13 +124,20 @@ export function reportType(store: CheckStore): "info" | "error" {
 	return aggregateOf(store.results) === "attention" ? "error" : "info";
 }
 
-/** Keep the last `maxLines` lines, then the last `maxBytes` UTF-8 bytes. */
+/** Keep the last `maxLines` lines, then the last `maxBytes` UTF-8 bytes without splitting a code point. */
 export function tail(text: string, maxLines = DEFAULT_TAIL_LINES, maxBytes = DEFAULT_TAIL_BYTES): string {
 	if (text === "") return "";
 	const lines = text.replace(/\r\n/g, "\n").replace(/\n$/, "").split("\n");
 	const bounded = lines.slice(-maxLines).join("\n");
-	if (Buffer.byteLength(bounded, "utf8") <= maxBytes) return bounded;
-	return Buffer.from(bounded, "utf8").subarray(-maxBytes).toString("utf8");
+	const buffer = Buffer.from(bounded, "utf8");
+	if (buffer.length <= maxBytes) return bounded;
+	let start = buffer.length - maxBytes;
+	while (start < buffer.length && (buffer[start]! & 0xc0) === 0x80) start += 1;
+	return buffer.subarray(start).toString("utf8");
+}
+
+function boundedStreams(result: CheckResult): { stdout: string; stderr: string } {
+	return { stdout: tail(result.stdout), stderr: tail(result.stderr) };
 }
 
 function boundedNames(names: readonly string[]): string {

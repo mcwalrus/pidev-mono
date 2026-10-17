@@ -58,6 +58,16 @@ describe("tail", () => {
 		const line = "é".repeat(DEFAULT_TAIL_BYTES);
 		expect(Buffer.byteLength(tail(line), "utf8")).toBeLessThanOrEqual(DEFAULT_TAIL_BYTES);
 	});
+
+	it("never splits a code point when the byte cut lands mid-sequence", () => {
+		// 3-byte code points put the cut at a continuation byte, not a boundary.
+		const line = "€".repeat(DEFAULT_TAIL_BYTES);
+		const bounded = tail(line);
+
+		expect(Buffer.byteLength(bounded, "utf8")).toBeLessThanOrEqual(DEFAULT_TAIL_BYTES);
+		expect(bounded).not.toContain("\uFFFD");
+		expect(bounded.endsWith("€")).toBe(true);
+	});
 });
 
 describe("reportText", () => {
