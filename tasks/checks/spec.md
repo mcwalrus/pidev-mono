@@ -105,7 +105,7 @@ A Pi extension that reads a list of user-authored check commands from `~/.config
 
 - Launching, supervising, restarting, or killing background processes or process trees.
 - Live or periodic change detection; polling; automatic mid-session re-checks.
-- Project-local check config and any `project_trust` integration.
+- Project-local rules beyond a first-found `.pi/checks/config.json` (see ticket 06); no merge with the user-global config and no `project_trust` integration.
 - An agent-facing tool exposing results; this is human-facing only in v1.
 - Gating MCP connection or any other startup step on a check result.
 - Cross-session or cross-terminal shared results.
@@ -114,7 +114,7 @@ A Pi extension that reads a list of user-authored check commands from `~/.config
 
 ## Further Notes
 
-- Two decisions defaulted because they were not resolved: (a) **no live mid-session change detection** in v1 — startup plus manual re-run only, with a last-run timestamp on the surface; (b) **user-global config only** in v1, because project-local checks are arbitrary code executed on clone. Override either and the scope grows.
+- Two decisions defaulted because they were not resolved: (a) **no live mid-session change detection** in v1 — startup plus manual re-run only, with a last-run timestamp on the surface; (b) **user-global config only** in v1, because project-local checks are arbitrary code executed on clone. Ticket 06 overrides (b): a project-local `.pi/checks/config.json` is now checked first and wins when present.
 - The original "run before the session starts, so the MCP server can connect" intent conflicts with hang safety. v1 is advisory and non-blocking; the MCP client connects in the background and retries, so a hard gate is not required. If a gate is wanted later it becomes a separate decision with a startup budget.
 - Do not infer port state from MCP events. The check command does whatever handshake it needs; MCP disconnects only surface when something uses the server.
 - Repo conventions apply: lockstep versions, no decision-code citations in `.ts`, co-located tests, `files` manifest with a ship check, no code comments beyond one-line why.

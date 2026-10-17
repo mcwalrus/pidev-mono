@@ -1,6 +1,9 @@
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { configPath, saveJsonConfig } from "@pidev/config";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CONFIG_NAME, loadChecksConfig, parseChecksConfig } from "./config.js";
+import { CONFIG_NAME, loadChecksConfig, PROJECT_CONFIG_FILE, parseChecksConfig } from "./config.js";
 
 afterEach(() => {
 	vi.restoreAllMocks();
@@ -85,5 +88,23 @@ describe("loadChecksConfig", () => {
 	it("reads checks from the XDG config path", () => {
 		saveJsonConfig(configPath(CONFIG_NAME), { checks: [{ name: "postgres", command: "pg_isready" }] });
 		expect(loadChecksConfig()).toEqual([{ name: "postgres", command: "pg_isready" }]);
+	});
+
+	it("prefers a project-local config under the session cwd", () => {
+		const cwd = mkdtempSync(join(tmpdir(), "pidev-checks-project-"));
+		saveJsonConfig(join(cwd, PROJECT_CONFIG_FILE), { checks: [{ name: "local", command: "true" }] });
+		saveJsonConfig(configPath(CONFIG_NAME), { checks: [{ name: "global", command: "true" }] });
+		expect(loadChecksConfig(cwd)).toEqual([{ name: "local", command: "true" }]);
+	});
+
+	it("falls back to the global config when the project file is absent", () => {
+		const cwd = mkdtempSync(join(tmpdir(), "pidev-checks-project-"));
+		saveJsonConfig(configPath(CONFIG_NAME), { checks: [{ name: "global", command: "true" }] });
+		expect(loadChecksConfig(cwd)).toEqual([{ name: "global", command: "true" }]);
+	});
+
+	it("falls back to the global config when no cwd is given", () => {
+		saveJsonConfig(configPath(CONFIG_NAME), { checks: [{ name: "global", command: "true" }] });
+		expect(loadChecksConfig()).toEqual([{ name: "global", command: "true" }]);
 	});
 });

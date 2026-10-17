@@ -1,7 +1,8 @@
 /**
  * @pidev/checks — environment precondition checks for Pi.
  *
- * Declare named shell probes in `~/.config/pidev-checks/config.json`. On
+ * Declare named shell probes in `~/.config/pidev-checks/config.json`, or per
+ * project in `.pi/checks/config.json`. On
  * `session_start` every check runs concurrently (non-blocking); the aggregate
  * shows beside the editor and `/checks` shows detail or re-runs on demand.
  * Checks are advisory and read-only — the extension launches nothing but the
@@ -15,7 +16,7 @@ import { type CheckExecutor, runChecks } from "./runner.js";
 import { type CheckResult, createCheckStore, seedResults } from "./state/store.js";
 
 export type { CheckDefinition } from "./config.js";
-export { CONFIG_NAME, DEFAULT_TIMEOUT_MS, loadChecksConfig, parseChecksConfig } from "./config.js";
+export { CONFIG_NAME, DEFAULT_TIMEOUT_MS, loadChecksConfig, PROJECT_CONFIG_FILE, parseChecksConfig } from "./config.js";
 export type { Aggregate, Foreground } from "./render.js";
 export { aggregateOf, reportText, statusText, tail, widgetLines } from "./render.js";
 export type { CheckExecutor, RunChecksOptions } from "./runner.js";
@@ -69,7 +70,7 @@ export default function register(pi: ExtensionAPI): void {
 	};
 
 	pi.on("session_start", (_event, ctx) => {
-		void run(ctx, loadChecksConfig());
+		void run(ctx, loadChecksConfig(ctx.cwd));
 	});
 
 	pi.on("session_shutdown", (_event, ctx) => {
@@ -90,7 +91,7 @@ export default function register(pi: ExtensionAPI): void {
 		handler: async (args, ctx) => {
 			const argument = args.trim();
 			if (argument === "run") {
-				await run(ctx, loadChecksConfig());
+				await run(ctx, loadChecksConfig(ctx.cwd));
 				ctx.ui.notify(reportText(store), "info");
 				return;
 			}

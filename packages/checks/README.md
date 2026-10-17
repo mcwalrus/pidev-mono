@@ -10,7 +10,9 @@ This surfaces the whole environment in one view before you start.
 
 ## Config
 
-Config lives at `~/.config/pidev-checks/config.json` (honours `XDG_CONFIG_HOME`):
+Config lives at `~/.config/pidev-checks/config.json` (honours `XDG_CONFIG_HOME`).
+A project-local `.pi/checks/config.json` is checked first and, when present,
+replaces the user-global config for that session.
 
 ```jsonc
 {
@@ -39,6 +41,10 @@ Config lives at `~/.config/pidev-checks/config.json` (honours `XDG_CONFIG_HOME`)
 | `args` | no | Argument list passed to `command`. |
 | `cwd` | no | Working directory; defaults to the session working directory. |
 | `timeoutMs` | no | Per-check timeout; defaults to `10000`. |
+
+Config resolution order: `$PWD/.pi/checks/config.json` first; if that file
+does not exist, the user-global `~/.config/pidev-checks/config.json`. The first
+file found wins — the two are not merged.
 
 A malformed config file warns and yields no checks rather than blocking startup.
 An invalid entry warns and is skipped, leaving the rest intact.

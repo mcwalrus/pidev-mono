@@ -1,9 +1,14 @@
-import { loadJsonConfigWithLegacyFallback } from "@pidev/config";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { loadJsonConfig, loadJsonConfigWithLegacyFallback } from "@pidev/config";
 import { Type } from "typebox";
 import { Value } from "typebox/value";
 
 /** Directory name under the XDG config root (`~/.config/pidev-checks/config.json`). */
 export const CONFIG_NAME = "pidev-checks";
+
+/** Project-relative config file, checked before the user-global config. */
+export const PROJECT_CONFIG_FILE = join(".pi", "checks", "config.json");
 
 /** Applied when a check declares no `timeoutMs`. */
 export const DEFAULT_TIMEOUT_MS = 10_000;
@@ -63,9 +68,16 @@ export function parseChecksConfig(raw: unknown): CheckDefinition[] {
 }
 
 /**
- * Load checks from the XDG config path with legacy fallback. A malformed file
- * warns via the shared loader and yields no checks; never throws.
+ * Load checks for a session. When `cwd` is given, a project-local
+ * `.pi/checks/config.json` under it is checked first and, if present, wins
+ * outright; otherwise the user-global XDG config is used with legacy fallback.
+ * A malformed file warns via the shared loader and yields no checks; never
+ * throws.
  */
-export function loadChecksConfig(): CheckDefinition[] {
+export function loadChecksConfig(cwd?: string): CheckDefinition[] {
+	if (cwd) {
+		const projectPath = join(cwd, PROJECT_CONFIG_FILE);
+		if (existsSync(projectPath)) return parseChecksConfig(loadJsonConfig<unknown>(projectPath));
+	}
 	return parseChecksConfig(loadJsonConfigWithLegacyFallback<unknown>(CONFIG_NAME));
 }
