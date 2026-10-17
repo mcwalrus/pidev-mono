@@ -1,0 +1,15 @@
+{
+	"files": {
+		"packages/config/config.test.ts": 521,
+		"packages/config/config.ts": 309,
+		"packages/config/index.ts": 13,
+		"packages/config/ship-manifest.test.ts": 8,
+		"packages/hello/config.ts": 26,
+		"packages/hello/hello.contract.test.ts": 14,
+		"packages/hello/hello.register.test.ts": 87,
+		"packages/hello/hello.ts": 79,
+		"packages/hello/index.ts": 33,
+		"packages/hello/ship-manifest.test.ts": 8,
+		"packages/hello/state/store.ts": 71
+	}
+}

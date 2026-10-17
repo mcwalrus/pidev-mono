@@ -1,0 +1,31 @@
+# No trailing slash: also matches a stray node_modules SYMLINK.
+node_modules
+packages/*/node_modules
+
+*.log
+.DS_Store
+*.tsbuildinfo
+*.cpuprofile
+
+.pi/
+
+# Local-only pipeline artifacts (guidance/ is intentionally tracked — hand-curated
+# AI-assistant context, not run state).
+.rpiv/artifacts/
+.rpiv/workflows/
+thoughts/
+
+# Environment
+.env
+
+# Editor files
+.vscode/
+.zed/
+.idea/
+*.swp
+*.swo
+*~
+
+# Package specific
+coverage/
+.nyc_output/

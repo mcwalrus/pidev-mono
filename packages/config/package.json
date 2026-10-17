@@ -1,0 +1,36 @@
+{
+	"name": "@piex/config",
+	"version": "0.1.0",
+	"description": "Shared config I/O utilities for piex-mono sibling packages (not a Pi extension).",
+	"keywords": [
+		"piex",
+		"config",
+		"shared-utility"
+	],
+	"type": "module",
+	"license": "MIT",
+	"author": "piex",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/example/piex-mono.git",
+		"directory": "packages/config"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"test": "vitest run"
+	},
+	"files": [
+		"index.ts",
+		"config.ts",
+		"CHANGELOG.md",
+		"README.md"
+	],
+	"exports": {
+		".": "./index.ts"
+	},
+	"peerDependencies": {
+		"typebox": "*"
+	}
+}
