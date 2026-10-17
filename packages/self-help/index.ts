@@ -23,7 +23,7 @@ export {
 	registerSelfHelpCommand,
 } from "./command.js";
 export type { PackageScope, ResolveContext, ResolvedPackage } from "./resolve.js";
-export { isSafeName, parseNpmSource, resolvePackages } from "./resolve.js";
+export { parseNpmSource, resolvePackages } from "./resolve.js";
 export { DEFAULT_SECTION_BYTE_CAP, formatExtensionsSection } from "./section.js";
 
 export function resolveFromSettings(pi: ExtensionAPI, cwd: string): ResolvedPackage[] {

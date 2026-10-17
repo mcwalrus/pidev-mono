@@ -67,13 +67,6 @@ export function parseNpmSource(source: string): { name: string; spec: string } |
 	return { name, spec };
 }
 
-/** A name is safe only when joining it under an install root cannot leave that root. */
-export function isSafeName(name: string): boolean {
-	if (name === "" || name.includes("..")) return false;
-	if (!SCOPED_NAME.test(name) && !UNSCOPED_NAME.test(name)) return false;
-	return true;
-}
-
 function managedRoot(context: ResolveContext, scope: PackageScope, name: string): string {
 	const base =
 		scope === "project"

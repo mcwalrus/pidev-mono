@@ -100,7 +100,7 @@ the session.
   path is joined, so a malformed source string cannot traverse the filesystem.
 - Repository code is never executed, and the package's scripts and manifests
   are never run.
-- nothing is read from the package beyond those root files, so installing an
+- Nothing is read from the package beyond those root files, so installing an
   extension gains it no capability through this extension.
 
 ## Prompt-injection risk
