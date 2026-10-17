@@ -1,5 +1,14 @@
 {
 	"files": {
+		"packages/checks/config.test.ts": 72,
+		"packages/checks/config.ts": 63,
+		"packages/checks/index.test.ts": 218,
+		"packages/checks/index.ts": 104,
+		"packages/checks/render.ts": 83,
+		"packages/checks/runner.test.ts": 127,
+		"packages/checks/runner.ts": 84,
+		"packages/checks/ship-manifest.test.ts": 8,
+		"packages/checks/state/store.ts": 36,
 		"packages/config/config.test.ts": 521,
 		"packages/config/config.ts": 309,
 		"packages/config/index.ts": 13,

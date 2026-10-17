@@ -1,0 +1,104 @@
+/**
+ * @pidev/checks — environment precondition checks for Pi.
+ *
+ * Declare named shell probes in `~/.config/pidev-checks/config.json`. On
+ * `session_start` every check runs concurrently (non-blocking); the aggregate
+ * shows beside the editor and `/checks` shows detail or re-runs on demand.
+ * Checks are advisory and read-only — the extension launches nothing but the
+ * declared commands.
+ */
+
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { type CheckDefinition, loadChecksConfig } from "./config.js";
+import { reportText, statusText, widgetLines } from "./render.js";
+import { type CheckExecutor, runChecks } from "./runner.js";
+import { type CheckResult, createCheckStore, seedResults } from "./state/store.js";
+
+export type { CheckDefinition } from "./config.js";
+export { CONFIG_NAME, DEFAULT_TIMEOUT_MS, loadChecksConfig, parseChecksConfig } from "./config.js";
+export type { Aggregate, Foreground } from "./render.js";
+export { aggregateOf, reportText, statusText, tail, widgetLines } from "./render.js";
+export type { CheckExecutor, RunChecksOptions } from "./runner.js";
+export { DEFAULT_CONCURRENCY, runChecks } from "./runner.js";
+export type { CheckResult, CheckState, CheckStore } from "./state/store.js";
+export { createCheckStore, seedResults } from "./state/store.js";
+
+export const COMMAND_NAME = "checks";
+export const WIDGET_KEY = "pidev-checks";
+export const STATUS_KEY = "pidev-checks";
+
+export default function register(pi: ExtensionAPI): void {
+	const store = createCheckStore();
+	let controller: AbortController | undefined;
+	let runToken = 0;
+
+	const paint = (ctx: ExtensionContext): void => {
+		if (!ctx.hasUI) return;
+		const theme = ctx.ui.theme;
+		ctx.ui.setWidget(WIDGET_KEY, widgetLines(store, theme));
+		ctx.ui.setStatus(STATUS_KEY, statusText(store, theme));
+	};
+
+	const run = (ctx: ExtensionContext, definitions: CheckDefinition[]): Promise<CheckResult[]> => {
+		controller?.abort();
+		const token = ++runToken;
+		const abort = new AbortController();
+		controller = abort;
+		store.results = seedResults(definitions);
+		store.running = true;
+		store.lastRunAt = null;
+		paint(ctx);
+
+		const executor: CheckExecutor = (command, args, options) => pi.exec(command, args, options);
+		return runChecks(definitions, executor, {
+			cwd: ctx.cwd,
+			signal: abort.signal,
+			onUpdate: (results) => {
+				if (token !== runToken) return;
+				store.results = results;
+				paint(ctx);
+			},
+		}).then((results) => {
+			if (token !== runToken) return results;
+			store.results = results;
+			store.running = false;
+			store.lastRunAt = Date.now();
+			paint(ctx);
+			return results;
+		});
+	};
+
+	pi.on("session_start", (_event, ctx) => {
+		void run(ctx, loadChecksConfig());
+	});
+
+	pi.on("session_shutdown", (_event, ctx) => {
+		runToken++;
+		controller?.abort();
+		controller = undefined;
+		store.results = [];
+		store.running = false;
+		store.lastRunAt = null;
+		if (ctx.hasUI) {
+			ctx.ui.setWidget(WIDGET_KEY, undefined);
+			ctx.ui.setStatus(STATUS_KEY, undefined);
+		}
+	});
+
+	pi.registerCommand(COMMAND_NAME, {
+		description: "Show environment check results, or re-run them with `/checks run`",
+		handler: async (args, ctx) => {
+			const argument = args.trim();
+			if (argument === "run") {
+				await run(ctx, loadChecksConfig());
+				ctx.ui.notify(reportText(store), "info");
+				return;
+			}
+			if (argument !== "") {
+				ctx.ui.notify("Usage: /checks [run]", "info");
+				return;
+			}
+			ctx.ui.notify(reportText(store), "info");
+		},
+	});
+}

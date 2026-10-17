@@ -1,0 +1,47 @@
+{
+	"name": "@pidev/checks",
+	"version": "0.1.0",
+	"description": "Pi extension. Environment precondition checks: declare shell probes in config, see pass/fail beside the editor, re-run on demand with /checks.",
+	"keywords": [
+		"pi-package",
+		"pi-extension",
+		"pidev",
+		"checks",
+		"preconditions"
+	],
+	"type": "module",
+	"license": "MIT",
+	"author": "pidev",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/mcwalrus/pidev-mono.git",
+		"directory": "packages/checks"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"test": "vitest run"
+	},
+	"files": [
+		"index.ts",
+		"config.ts",
+		"runner.ts",
+		"render.ts",
+		"state/store.ts",
+		"README.md",
+		"CHANGELOG.md"
+	],
+	"pi": {
+		"extensions": [
+			"./index.ts"
+		]
+	},
+	"dependencies": {
+		"@pidev/config": "^0.1.0"
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-coding-agent": "*",
+		"typebox": "*"
+	}
+}

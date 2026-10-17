@@ -186,7 +186,7 @@ export interface MockCtxOptions {
 	model?: Model<Api>;
 	branch?: SessionEntry[];
 	models?: Model<Api>[];
-	ui?: Partial<ExtensionUIContext>;
+	ui?: Partial<Omit<ExtensionUIContext, "theme">> & { theme?: Theme | MockTheme };
 	/** Session id the ctx advertises via `sessionManager.getSessionId()`. Defaults to "test-session". */
 	sessionId?: string;
 	/** Display name the ctx advertises via `sessionManager.getSessionName()`. Omitted = unnamed session. */
