@@ -50,7 +50,7 @@ export function renderOverlay(input: OverlayRenderInput): OverlayFrame {
 	const lines = [border(`╭${"─".repeat(innerWidth)}╮`)];
 
 	lines.push(row(` ${theme.fg("accent", theme.bold(OVERLAY_TITLE))}`));
-	lines.push(row(` ${theme.fg("dim", "Exact assembled system prompt for this session")}`));
+	lines.push(row(` ${theme.fg("dim", "Assembled prompt + active semantic tools")}`));
 	lines.push(row(""));
 
 	for (let index = scrollOffset; index < end; index++) lines.push(row(` ${displayLines[index] ?? ""}`));

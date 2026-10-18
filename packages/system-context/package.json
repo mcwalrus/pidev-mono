@@ -26,6 +26,7 @@
 	"files": [
 		"dump.ts",
 		"index.ts",
+		"footprint.ts",
 		"overlay.ts",
 		"README.md",
 		"CHANGELOG.md"
