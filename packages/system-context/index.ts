@@ -15,13 +15,41 @@ import type {
 	ToolInfo,
 } from "@earendil-works/pi-coding-agent";
 import type { KeybindingsManager, TUI } from "@earendil-works/pi-tui";
+import { Type } from "typebox";
 import { type ProviderNeutralContent, renderProviderNeutralContent, toProviderNeutralTool } from "./footprint.js";
 import { SystemContextOverlay } from "./overlay.js";
+import { type CaptureRequest, captureScript, DEFAULT_OUTPUT_FILE } from "./script.js";
 
 export const COMMAND_NAME = "system-context";
+export const TOOL_NAME = "system_context";
 
 /** The slice of context the footprint capture needs. */
 export type FootprintSource = Pick<ExtensionContext, "getSystemPrompt">;
+
+export interface ParsedCommandArgs {
+	out?: string;
+	dir?: string;
+}
+
+/** Parse `/system-context [--out <file>] [--dir <path>]`. */
+export function parseCommandArgs(args: string): ParsedCommandArgs {
+	const tokens = args.trim().split(/\s+/).filter(Boolean);
+	const parsed: ParsedCommandArgs = {};
+	for (let index = 0; index < tokens.length; index++) {
+		if (tokens[index] === "--out") parsed.out = tokens[++index];
+		else if (tokens[index] === "--dir") parsed.dir = tokens[++index];
+	}
+	return parsed;
+}
+
+const CaptureParams = Type.Object({
+	cwd: Type.Optional(
+		Type.String({ description: "Project directory to capture. Defaults to the session working directory." }),
+	),
+	out: Type.Optional(
+		Type.String({ description: `Output file path. Defaults to ${DEFAULT_OUTPUT_FILE} in the target directory.` }),
+	),
+});
 
 /** The active subset of all tools, reduced to provider-visible semantics. */
 export function getProviderNeutralTools(pi: ExtensionAPI) {
@@ -56,9 +84,45 @@ export default function register(pi: ExtensionAPI): void {
 		footprint = captureFootprint(pi, ctx);
 	});
 
+	pi.registerTool({
+		name: TOOL_NAME,
+		label: "Capture system context",
+		description:
+			"Capture the assembled system prompt Pi would build for a project directory and write it to a file. Returns the written path and byte size.",
+		parameters: CaptureParams,
+		async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
+			try {
+				const { path, bytes } = await captureScript(pi, params as CaptureRequest, ctx.cwd);
+				return {
+					content: [{ type: "text" as const, text: `Wrote ${bytes} bytes to ${path}` }],
+					details: { path, bytes },
+				};
+			} catch (error) {
+				const message = error instanceof Error ? error.message : String(error);
+				return {
+					content: [{ type: "text" as const, text: `Error: ${message}` }],
+					details: undefined,
+					isError: true,
+				};
+			}
+		},
+	});
+
 	pi.registerCommand(COMMAND_NAME, {
 		description: "Show this session's provider-neutral system footprint",
-		handler: async (_args, ctx) => {
+		handler: async (args, ctx) => {
+			const parsed = parseCommandArgs(args);
+			if (parsed.out !== undefined) {
+				try {
+					const { path, bytes } = await captureScript(pi, { cwd: parsed.dir, out: parsed.out }, ctx.cwd);
+					ctx.ui.notify(`Wrote ${bytes} bytes to ${path}`, "info");
+				} catch (error) {
+					const message = error instanceof Error ? error.message : String(error);
+					ctx.ui.notify(`System context capture failed: ${message}`, "error");
+				}
+				return;
+			}
+
 			if (ctx.mode !== "tui") {
 				ctx.ui.notify("/system-context opens a viewer only in interactive Pi.", "warning");
 				return;
