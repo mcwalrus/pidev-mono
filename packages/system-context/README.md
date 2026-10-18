@@ -103,7 +103,11 @@ error result rather than a claimed capture.
 - Sections injected by an extension's `before_agent_start` handler, such as
   ponytail's `<ponytail>` section, only appear once an agent run starts. Neither
   surface makes a model call, so those sections are absent.
-- The script needs `@earendil-works/pi-coding-agent` to resolve at runtime.
+- The script needs the `@earendil-works` SDK tree to resolve at runtime, and
+  every `@earendil-works` package must match the Pi host version. In this
+  monorepo that is the root `devDependencies` copy; a mismatched transitive
+  package leaves the SDK root unimportable, so keep the tree matched to the Pi
+  host you run.
 
 ## Attribution
 
