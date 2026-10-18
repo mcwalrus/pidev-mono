@@ -18,6 +18,7 @@ I use [`justfile`](https://github.com/casey/just).  Run `just` to see workspace 
 | ------------------------------------------ | ------------------------------------------------------------------------ | ----- |
 | [`@pidev/checks`](packages/checks)         | Environment precondition checks beside the editor                        | User  |
 | [`@pidev/self-help`](packages/self-help)   | Tells the agent which extensions are installed and where their docs live | Agent |
+| [`@pidev/system-context`](packages/system-context) | Views the assembled system prompt in-session, and captures any project's prompt to a file | User + Agent |
 | [`@pidev/term-image`](packages/term-image) | Captures a tmux pane to a PNG, plus a skill that says when to use it     | Agent |
 
 ### @pidev/checks

@@ -20,14 +20,27 @@
 		"access": "public"
 	},
 	"scripts": {
-		"dump": "node --experimental-strip-types dump.ts"
+		"dump": "node --experimental-strip-types dump.ts",
+		"test": "vitest run"
 	},
 	"files": [
 		"dump.ts",
+		"index.ts",
+		"overlay.ts",
 		"README.md",
 		"CHANGELOG.md"
 	],
+	"exports": {
+		".": "./index.ts",
+		"./dump": "./dump.ts"
+	},
+	"pi": {
+		"extensions": [
+			"./index.ts"
+		]
+	},
 	"peerDependencies": {
-		"@earendil-works/pi-coding-agent": "*"
+		"@earendil-works/pi-coding-agent": "*",
+		"@earendil-works/pi-tui": "*"
 	}
 }
