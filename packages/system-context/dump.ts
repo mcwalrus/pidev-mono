@@ -87,7 +87,7 @@ async function waitForToolsToSettle(
 			return;
 		}
 		previous = count;
-		await new Promise((exit) => setTimeout(exit, TOOL_SETTLE_POLL_MS));
+		await new Promise((finish) => setTimeout(finish, TOOL_SETTLE_POLL_MS));
 	}
 	log(`active tools did not settle within ${timeoutMs}ms`);
 }
