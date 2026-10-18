@@ -1,7 +1,7 @@
 {
 	"name": "@pidev/system-context",
 	"version": "0.1.0",
-	"description": "Script. Dumps the system-context prompt Pi builds for a project via the SDK, including its extensions, skills and MCP tools.",
+	"description": "Pi extension + script. Views the assembled system prompt in-session, and captures any project's prompt to a file via the SDK.",
 	"keywords": [
 		"pi-package",
 		"pidev",
@@ -30,7 +30,9 @@
 		"overlay.ts",
 		"script.ts",
 		"README.md",
-		"CHANGELOG.md"
+		"CHANGELOG.md",
+		"LICENSE",
+		"NOTICE"
 	],
 	"exports": {
 		".": "./index.ts",

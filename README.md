@@ -41,6 +41,16 @@ exists and where its README lives. It advertises **locations, not content** — 
 agent reads the README with the ordinary `read` tool when asked. A `/self-help`
 command shows the same audit to you.
 
+### @pidev/system-context
+
+Pi builds a project's system prompt only inside a running session. This package
+makes it inspectable: a `/system-context` overlay shows the current session's
+provider-neutral footprint, and the same command with `--out` — plus a
+`system_context` tool — shells out to an SDK script that captures any project
+directory's prompt to a file. The overlay is adapted from
+[pi-system-prompt-viewer](https://github.com/eggmasonvalue/pi-system-prompt-viewer)
+by eggmasonvalue (Apache-2.0); see the package [NOTICE](packages/system-context/NOTICE).
+
 ### @pidev/term-image
 
 An agent editing TUI rendering has no way to see the result; `tmux capture-pane`

@@ -1,0 +1,20 @@
+@pidev/system-context
+Copyright 2026 pidev
+
+This package adapts material from pi-system-prompt-viewer:
+
+  Project: pi-system-prompt-viewer
+  Author:  eggmasonvalue
+  URL:     https://github.com/eggmasonvalue/pi-system-prompt-viewer
+  Licence: Apache-2.0
+
+Material changes made from upstream:
+
+- Ported only the provider-neutral System Footprint view. The Provider Request
+  view and the `before_provider_request` subscription were removed, so no
+  provider payload is rendered or serialised.
+- Reduced the upstream two-view TUI overlay to a single system-footprint view;
+  the tab toggle was removed.
+- Integrated the viewer with this package's SDK dump script, so the assembled
+  prompt for another project directory can be captured to a file from both the
+  `/system-context` command and a model-callable tool.
