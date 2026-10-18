@@ -48,6 +48,12 @@ describe("buildInvocation", () => {
 });
 
 describe("captureScript", () => {
+	it("defaults the output into the explicit target directory when only cwd is given", () => {
+		const invocation = buildInvocation({ cwd: "/projects/other" }, "/session");
+
+		expect(invocation.outPath).toBe(join("/projects/other", DEFAULT_OUTPUT_FILE));
+	});
+
 	it("runs the script and returns the absolute path and byte size", async () => {
 		const dir = tempDir();
 		const out = join(dir, "prompt.txt");

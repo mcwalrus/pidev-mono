@@ -32,7 +32,7 @@ export interface CaptureOutcome {
 /** Build the `node --experimental-strip-types dump.ts ...` invocation. */
 export function buildInvocation(request: CaptureRequest, sessionCwd: string): CaptureInvocation {
 	const targetDir = request.cwd ? resolve(sessionCwd, request.cwd) : sessionCwd;
-	const outPath = request.out ? resolve(sessionCwd, request.out) : resolve(sessionCwd, DEFAULT_OUTPUT_FILE);
+	const outPath = request.out ? resolve(sessionCwd, request.out) : resolve(targetDir, DEFAULT_OUTPUT_FILE);
 	return {
 		command: "node",
 		args: ["--experimental-strip-types", SCRIPT_PATH, targetDir, "--out", outPath],

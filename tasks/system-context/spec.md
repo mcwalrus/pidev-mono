@@ -1,6 +1,6 @@
 # Spec: `@pidev/system-context` — system-prompt extension and repeatable dump script
 
-Status: ready-for-agent
+Status: implemented
 
 ## Problem Statement
 
