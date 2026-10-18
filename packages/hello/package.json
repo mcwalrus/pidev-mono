@@ -9,7 +9,7 @@
 		"example"
 	],
 	"type": "module",
-	"license": "MIT",
+	"license": "Apache-2.0",
 	"author": "pidev",
 	"repository": {
 		"type": "git",
